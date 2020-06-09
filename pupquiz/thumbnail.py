@@ -18,7 +18,7 @@ font = ImageFont.truetype(
 def encode(im):
     with BytesIO() as buffer:
         im.save(buffer, 'PNG')
-        return b64encode(buffer.getvalue())
+        return b64encode(buffer.getvalue()).decode()
 
 
 def gen_def_thumb(on):

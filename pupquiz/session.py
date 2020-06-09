@@ -90,8 +90,8 @@ def update_vocab(v: dict):
 
     # Form a set of word-translation pairs
     def div(x): return filter(None, word_subdiv(x))
-    words = {(x[0].strip(), x[1].strip()) for x in chain.from_iterable(zip(
-        div(m['q']), div(m['a'])) for m in worditer(data['contents']))}
+    words = {(x[0].strip(), x[1].strip()) for x in chain.from_iterable(
+        map(list, zip(div(m['q']), div(m['a']))) for m in worditer(data['contents']))}
 
     # Clean buckets of old words, set words be only new words
     for bucket in v[VOCAB_WORDS][1:]:
@@ -144,7 +144,7 @@ class SetProvider:
         self.keys = self.__rd.sample([*self.__sets], len(self.__sets))
 
         # Remove references to outdated sets (gallery info comes from disk)
-        self.__gallery = v[VOCAB_GALLERY] = {*v[VOCAB_GALLERY]} & {*self.keys}
+        self.__gallery = v[VOCAB_GALLERY] = [*({*v[VOCAB_GALLERY]} & {*self.keys})]
 
         # Order keys so that unlocked are first, then locked
         self.keys = sorted(self.keys, key=lambda x: x not in self.__gallery)
@@ -157,7 +157,7 @@ class SetProvider:
     def unlocked(self, item: Optional[str] = None):
         if item is None:
             return self.__gallery
-        self.__gallery.add(item)
+        self.__gallery.append(item)
 
     def reset_progress(self) -> bool:
         'Clears gallery, moves words to the first bucket. Calls update_vocab.'
@@ -214,7 +214,7 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                 win.close()
                 del win
                 return None, None
-            ses[SES_WIN_POS] = win.CurrentLocation()
+            ses[SES_WIN_POS] = list(win.CurrentLocation())
             if event != sg.TIMEOUT_EVENT:
                 break
 

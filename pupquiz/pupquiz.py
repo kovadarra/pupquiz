@@ -111,7 +111,7 @@ class Quiz:
                         if not self.__sets.reset_progress():
                             continue
                     break
-                ses[SES_WIN_POS] = self.__win.CurrentLocation()
+                ses[SES_WIN_POS] = list(self.__win.CurrentLocation())
                 canvas.update()
             if event in (None, '-MENU-'):
                 self.__words[l_idx].append(cur_word)
