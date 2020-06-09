@@ -9,7 +9,7 @@ def data_path(*args):
 
 
 cfg = {
-    'app-icon': resource_filename('pupquiz.resources', 'brain_icon_17_256_2G0_icon.ico'),
+    'app-icon': resource_filename('pupquiz.resources', 'icon.ico'),
     'color-text': '#f0eff4',
     'color-select-info-guide': '#f0eff4',
     'color-background': '#111111',
