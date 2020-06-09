@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="pupquiz",
-    version="0.0.6",
+    version="0.0.7",
     author="kovadarra",
     author_email="kovadarra@users.noreply.github.com",
     description="Facilitates vocabulary acquisition",
@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/kovadarra/pupquiz",
     packages=setuptools.find_packages(),
     install_requires=[
-        'pillow', 'ujson', 'pysimplegui'
+        'pillow>=7.1.2', 'ujson>=3.0.0', 'pysimplegui>=4.20.0'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
