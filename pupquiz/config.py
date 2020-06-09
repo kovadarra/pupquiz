@@ -66,7 +66,7 @@ if not os.path.isdir(data_path()):
 if not os.path.isdir(data_path('Default Assets')):
     from zipfile import ZipFile
     from pkg_resources import resource_stream
-    with ZipFile(resource_stream('pupquiz.resources', 'def-imgs.zip'), 'r') as f:
+    with ZipFile(resource_stream('pupquiz.resources', 'default-assets.zip'), 'r') as f:
         f.extractall(data_path())
 
 
