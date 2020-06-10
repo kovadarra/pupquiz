@@ -95,10 +95,11 @@ def update_vocab(v: dict):
 
     # Clean buckets of old words, set words be only new words
     for bucket in v[VOCAB_WORDS][1:]:
-        bucket = {tuple(x) for x in bucket} & words
-        words -= bucket
+        as_set = {tuple(x) for x in bucket} & words
+        words -= as_set
+        bucket[:] = [*as_set]
 
-    v[VOCAB_WORDS][0] = words = [*words]
+    v[VOCAB_WORDS][0] = [*words]
     v[VOCAB_DATE] = os.path.getmtime(v[VOCAB_PATH])
     v[VOCAB_NAME] = data['title']
     update_thumbnail(v)
