@@ -102,7 +102,7 @@ class Quiz:
 
             # 'Translate' button
             elif event == '-TRANSL-':
-                self.__words[1].append(cur_word)  # Skip word
+                self.__words[l_idx].append(cur_word)
                 self.__win['-RES-'].update(CFG_TRANSLATE_OPENED,
                                            text_color=cfg['color-info-translation-opened'])
                 webbrowser.open(cfg['translate-url'].format(cur_word[0]))

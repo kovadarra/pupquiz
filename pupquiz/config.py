@@ -78,8 +78,7 @@ try:
         cfg.update(ujson.load(f) or {})  # apply user preference
 except FileNotFoundError:
     with open(CFG_PATH, 'w') as f:
-        f.write(
-            '{\n}')
+        f.write('{\n}')
 
 
 sg.set_global_icon(cfg['app-icon'])
