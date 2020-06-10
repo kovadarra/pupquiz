@@ -9,23 +9,6 @@ from .session import (SES_WIN_POS, VOCAB_NAME, VOCAB_WORDS, Set, SetProvider,
                       calc_progress, get_vocabulary, save_session_json, ses,
                       update_vocab)
 
-# window background
-sg.theme_background_color(cfg['color-background'])
-sg.theme_element_background_color(cfg['color-background'])
-
-# text controls
-sg.theme_text_color(cfg['color-text'])
-sg.theme_text_element_background_color(cfg['color-background'])
-
-# input controls
-sg.theme_input_text_color(cfg['color-input-text'])
-sg.theme_input_background_color(cfg['color-input-background'])
-
-# button controls
-sg.theme_button_color(
-    (cfg['color-button-text'], cfg['color-button-background']))
-sg.theme_border_width(cfg['control-border-width'])
-
 
 def weighted_pick(ls, rd):
     return ls[int(rd.random()**3.5*len(ls))]

@@ -83,5 +83,15 @@ except FileNotFoundError:
 
 
 sg.set_global_icon(cfg['app-icon'])
+sg.theme_background_color(cfg['color-background'])
+sg.theme_element_background_color(cfg['color-background'])
+sg.theme_text_color(cfg['color-text'])
+sg.theme_text_element_background_color(cfg['color-background'])
+sg.theme_input_text_color(cfg['color-input-text'])
+sg.theme_input_background_color(cfg['color-input-background'])
+sg.theme_button_color(
+    (cfg['color-button-text'], cfg['color-button-background']))
+sg.theme_border_width(cfg['control-border-width'])
+
 CFG_APPNAME, CFG_SELECT_INFO, CFG_APPNAME_SES, CFG_GREET, CFG_CORRECT, CFG_INCORRECT, CFG_ADDWORD, CFG_NEWWORD, CFG_GUESS, CFG_TRANSLATE, CFG_TRANSLATE_OPENED, CFG_RESET, CFG_MENU, CFG_CONFIRM_DELETE, CFG_CONFIRM_RESET = cfg[
     'locale']
