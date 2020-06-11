@@ -131,12 +131,6 @@ def_on, def_off = ses[SES_ADD_V_HOVER], ses[SES_ADD_V_DEF]
 
 
 class SetProvider:
-    '''
-    Returns, in a pre-determined order, lists of image paths associated with a vocabulary.
-
-    Can be iterated over. Advancing the iterator marks the previous set as unlocked.
-    '''
-
     def __init__(self, v):
         self.__v = v
         self.__sets = {
@@ -145,7 +139,8 @@ class SetProvider:
         self.keys = self.__rd.sample([*self.__sets], len(self.__sets))
 
         # Remove references to outdated sets (gallery info comes from disk)
-        self.__gallery = v[VOCAB_GALLERY] = [*({*v[VOCAB_GALLERY]} & {*self.keys})]
+        self.__gallery = v[VOCAB_GALLERY] = [
+            *({*v[VOCAB_GALLERY]} & {*self.keys})]
 
         # Order keys so that unlocked are first, then locked
         self.keys = sorted(self.keys, key=lambda x: x not in self.__gallery)
@@ -196,7 +191,7 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
 
     win_loc = ses[SES_WIN_POS]
     win = sg.Window(CFG_APPNAME, layout, finalize=True, location=win_loc,
-                    margins=(40, 40), font=cfg['font'])
+                    margins=(40, 40), font=cfg['font'], return_keyboard_events=True)
 
     # Bind mouse enter, leave, and right-click events to each vocabulary slot
     for i in range(9):
@@ -219,6 +214,12 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
             if event != sg.TIMEOUT_EVENT:
                 break
 
+        # Vocabulary hotkey?
+        if type(event) == str:
+            vidx = cfg['select-hotkeys'].find(event)
+            if vidx != -1:
+                event = vidx
+
         if type(event) == int:
             v = ses[SES_VOCABS][event]
             if VOCAB_ICON_ON in v:
@@ -231,6 +232,7 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
 
             path = sg.PopupGetFile('', ses[SES_LAST_DIR] or '', file_types=cfg['vocab-file-types'],
                                    no_window=True, initial_folder=ses[SES_LAST_DIR])
+            win.TKroot.focus_force()
             if path:
                 ses[SES_LAST_DIR] = os.path.dirname(path)
                 v[VOCAB_PATH] = path
@@ -244,3 +246,5 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                 win[vidx](image_data=get_icon(vidx, True))
             elif ev == '+LEAVE+':
                 win[vidx](image_data=get_icon(vidx, False))
+            elif ev == '+HOTKEY+':
+                print(f'hotkey for {vidx}')
