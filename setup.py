@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/kovadarra/pupquiz",
     packages=setuptools.find_packages(),
     install_requires=[
-        'pillow>=7.1.2', 'ujson>=3.0.0', 'pysimplegui>=4.20.0'
+        'pillow>=7.1.2', 'ujson>=3.0.0', 'pysimplegui>=4.20.0', 'gTTS>=2.1.1', 'playsound>=1.2.2'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

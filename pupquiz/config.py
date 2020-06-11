@@ -1,3 +1,4 @@
+import ctypes
 from pkg_resources import resource_filename
 import PySimpleGUI as sg
 import os
@@ -25,10 +26,12 @@ cfg = {
     'select-info-guide-width': 4,
     'select-info-guide-height': 59,
     'select-hotkeys': '123456789',
+    'patt-vocab-config': r"""(?m)^content: '''\s*<!--(.+)-->""",
     'patt-set': r'(?i)^(?P<set>.+\\)(?P<img>.+\.(jpg|gif|png))$',
     'patt-gif-loop-pause': r'(?i)(?<!p)\.gif$',
     'patt-vocab-word': r'(?m)^(?P<q>.+)\n[^\S\n]*~ (?P<a>.+)',
     'patt-vocab-word-subdivider': r'<br>|<i>.*?</i>',
+    'patt-word-spoken-part': r'^[^,]+',
     'patt-vocab-file': r"""(?ms)^title: "(?P<title>.+?)"$.+?^content: '''(?P<contents>.+?^)'''""",
     'vocab-file-types': [['Vocabulary Files', '*.cson']],
     'common-sets': [data_path('Default Assets')],
@@ -38,6 +41,7 @@ cfg = {
     'image-max-height': 500,
     'control-border-width': 0,
     'font': '"Berlin Sans FB" 13',
+    'spoken-lang': '',
     'thumbnail-placeholder-color-hover': '#626262',
     'thumbnail-placeholder-color-default': '#454545',
     'thumbnail-placeholder-width': 10,
@@ -84,7 +88,6 @@ except FileNotFoundError:
 
 # Set icon
 # https://stackoverflow.com/a/34547834
-import ctypes
 myappid = 'mycompany.myproduct.subproduct.version'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 sg.set_global_icon(cfg['app-icon'])

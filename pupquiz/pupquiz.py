@@ -1,7 +1,11 @@
+import os
+import re
 import webbrowser
 from contextlib import suppress
 
 import PySimpleGUI as sg
+from gtts import gTTS
+from playsound import playsound
 
 from .canvas import CANVAS_SZ, Canvas
 from .config import *
@@ -14,14 +18,15 @@ def weighted_pick(ls, rd):
     return ls[int(rd.random()**3.5*len(ls))]
 
 
-def pick_elem(ls, rd):
-    l = weighted_pick([l for l in [ls[1], ls[0], *ls[2:]] if l], rd)
-    res = l.pop(rd.randrange(len(l)))
-    i = next(i for i, v in enumerate(ls) if v is l)
-    return i == 0, i, res
-
-
 FORM_WIDTH = 28
+TTS_PATH = data_path('tts.mp3')
+spoken_part_search = re.compile(cfg['patt-word-spoken-part']).search
+
+
+def get_tts_path():
+    if os.path.exists(TTS_PATH):
+        os.remove(TTS_PATH)
+    return TTS_PATH
 
 
 class Quiz:
@@ -55,6 +60,13 @@ class Quiz:
     def __cur_steps(self):
         return sum(i*len(l) for i, l in enumerate(self.__words))
 
+    def __pick_word(self):
+        ls, rd = self.__words, self.__sets.rd
+        l = weighted_pick([l for l in [*ls[1:2], ls[0], *ls[3:]] if l], rd)
+        res = l.pop(rd.randrange(len(l)))
+        i = next(i for i, v in enumerate(ls) if v is l)
+        return i == 0, i, res
+
     def run(self):
         # Create layout; image on the left, quiz form on the right
         def buts(*args):
@@ -73,7 +85,7 @@ class Quiz:
             cur_set, cur_img = self.__cur_img()
             canvas.set_image(cur_set, cur_img, no_advance)
             no_advance = True
-            new, l_idx, cur_word = pick_elem(self.__words, self.__sets.rd)
+            new, l_idx, cur_word = self.__pick_word()
             self.__win['-OK-'].update(CFG_NEWWORD if new else CFG_GUESS)
 
             # Reset controls
@@ -85,6 +97,16 @@ class Quiz:
                 self.__win[i].update(cur_word[i] if new else '',
                                      text_color=col, background_color=bgcol, select=not new)
             self.__win[0].set_focus()
+
+            # Speak new words
+            if new and cfg['spoken-lang']:
+                m = re.search(cfg['patt-word-spoken-part'], cur_word[0])
+                if m:
+                    self.__win.read(0)
+                    tts_path = get_tts_path()
+                    gTTS(text=m[0], lang=cfg['spoken-lang'],
+                         slow=False).save(tts_path)
+                    playsound(tts_path)
 
             # Retrieve input
             while True:
