@@ -1,3 +1,4 @@
+from .session import VOCAB_CONFIG
 import os
 import re
 import webbrowser
@@ -161,6 +162,20 @@ class Quiz:
 def main_loop():
     while True:
         v, provider = get_vocabulary()
-        if not v or not Quiz(v, provider).run():
+        if not v:
             break
+
+        # Support overriding config on a per-vocab basis
+        vconfig = {**v[VOCAB_CONFIG]}
+        for k in vconfig:
+            original = cfg[k]
+            cfg[k] = vconfig[k]
+            vconfig[k] = original
+
+        if not Quiz(v, provider).run():
+            break
+
+        # Restore common config
+        cfg.update(vconfig)
+        
     save_session_json()

@@ -18,7 +18,6 @@ SES_SET_DIRS = ''
 SES_LAST_DIR = 'last-dir'
 SES_VOCABS = 'vocabs'
 SES_WIN_POS = 'win-pos'
-VOCAB_GALLERY = 'gallery'
 SES_CFG_DATE = 'config-date'
 SES_ADD_V_HOVER = 'add-v-hover'
 SES_ADD_V_DEF = 'add-v-def'
@@ -30,6 +29,8 @@ VOCAB_WORDS = 'words'
 VOCAB_ICON_ON = 'icon-on'
 VOCAB_ICON_OFF = 'icon-off'
 VOCAB_DATE = 'date'
+VOCAB_GALLERY = 'gallery'
+VOCAB_CONFIG = 'config'
 
 NVOCABS = 9
 
@@ -37,6 +38,7 @@ setmatch = re.compile(cfg['patt-set']).match
 worditer = re.compile(cfg['patt-vocab-word']).finditer
 word_subdiv = re.compile(cfg['patt-vocab-word-subdivider']).split
 contentsearch = re.compile(cfg['patt-vocab-file']).search
+vconfigsearch = re.compile(cfg['patt-vocab-config']).search
 
 # Set is a collection of pictures with continuity
 Set = List[str]
@@ -86,12 +88,14 @@ def update_vocab(v: dict):
     'Submits progress to disk and generates thumbnail reflecting done progress'
 
     with open(v[VOCAB_PATH], 'r', encoding='U8') as f:
-        data = contentsearch(f.read())
+        m = contentsearch(f.read())
+        contents, title = m['contents'], m['title']
+        mconfig = vconfigsearch(contents)
 
     # Form a set of word-translation pairs
     def div(x): return filter(None, word_subdiv(x))
     words = {(x[0].strip(), x[1].strip()) for x in chain.from_iterable(
-        map(list, zip(div(m['q']), div(m['a']))) for m in worditer(data['contents']))}
+        map(list, zip(div(m['q']), div(m['a']))) for m in worditer(contents))}
 
     # Clean buckets of old words, set words be only new words
     for bucket in v[VOCAB_WORDS][1:]:
@@ -101,7 +105,8 @@ def update_vocab(v: dict):
 
     v[VOCAB_WORDS][0] = [*words]
     v[VOCAB_DATE] = os.path.getmtime(v[VOCAB_PATH])
-    v[VOCAB_NAME] = data['title']
+    v[VOCAB_NAME] = title
+    v[VOCAB_CONFIG] = ujson.loads(mconfig[1]) if mconfig else {}
     update_thumbnail(v)
 
 

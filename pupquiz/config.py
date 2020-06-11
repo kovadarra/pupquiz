@@ -26,7 +26,7 @@ cfg = {
     'select-info-guide-width': 4,
     'select-info-guide-height': 59,
     'select-hotkeys': '123456789',
-    'patt-vocab-config': r"""(?m)^content: '''\s*<!--(.+)-->""",
+    'patt-vocab-config': r'^\s*<!--(.+)-->\r?\n',
     'patt-set': r'(?i)^(?P<set>.+\\)(?P<img>.+\.(jpg|gif|png))$',
     'patt-gif-loop-pause': r'(?i)(?<!p)\.gif$',
     'patt-vocab-word': r'(?m)^(?P<q>.+)\n[^\S\n]*~ (?P<a>.+)',
