@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="pupquiz",
-    version="0.0.11",
+    version="0.0.13",
     author="kovadarra",
     author_email="kovadarra@users.noreply.github.com",
     description="Facilitates vocabulary acquisition",
@@ -22,5 +22,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.7',
-    package_data={'': ['default-assets.zip', 'icon.ico']}
+    package_data={'': ['default-assets.zip', 'icon.ico', 'folder-off.png', 'folder-on.png']}
 )

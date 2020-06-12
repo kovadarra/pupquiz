@@ -40,6 +40,8 @@ cfg = {
     
     # Styling
     'app-icon': resource_filename('pupquiz.resources', 'icon.ico'),
+    'image-folder-on': resource_filename('pupquiz.resources', 'folder-on.png'),
+    'image-folder-off': resource_filename('pupquiz.resources', 'folder-off.png'),
     'color-text': '#f0eff4',
     'color-select-info-guide': '#f0eff4',
     'color-background': '#111111',

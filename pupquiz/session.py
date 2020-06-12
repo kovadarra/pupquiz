@@ -1,3 +1,5 @@
+import ctypes
+from .config import CFG_PATH
 import glob
 import os
 import re
@@ -189,16 +191,18 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
 
     # First row: info + guide, second-to-fourth rows: vocabulary slots (3 per row)
     guidesz = (cfg['select-info-guide-width'], cfg['select-info-guide-height'])
-    layout = [[sg.Image(key='-INFO-GUIDE-', background_color=cfg['color-select-info-guide'], size=guidesz, pad=((0, 10), (0, 10))),
-               sg.T(CFG_SELECT_INFO, pad=(0, (0, 10)), auto_size_text=True, key='-INFO-')]] +\
+    layout = [[sg.Image(key='-INFO-GUIDE-', background_color=cfg['color-select-info-guide'], size=guidesz, pad=((0, 10), (40, 10))),
+               sg.T(CFG_SELECT_INFO, pad=(0, (40, 10)), auto_size_text=True, key='-INFO-')]] +\
         [[sg.B(key=j, pad=(10, 10), image_data=get_icon(j), button_color=(
-            None, cfg['color-background'])) for j in range(i*3, i*3+3)] for i in range(3)]
+            None, cfg['color-background'])) for j in range(i*3, i*3+3)] for i in range(3)] +\
+        [[sg.B(image_filename=cfg['image-folder-off'], pad=(0, 0), key='-DIR-',
+               button_color=(None, cfg['color-background']))]]
 
     win_loc = ses[SES_WIN_POS]
     win = sg.Window(CFG_APPNAME, layout, finalize=True, location=win_loc,
-                    margins=(40, 40), font=cfg['font'], return_keyboard_events=True)
+                    margins=(40, 0), font=cfg['font'], return_keyboard_events=True)
 
-    # Bind mouse enter, leave, and right-click events to each vocabulary slot
+    # Bind mouse enter, leave, and right-click events
     for i in range(9):
         v = ses[SES_VOCABS][i]
         if VOCAB_PATH in v and os.path.getmtime(v[VOCAB_PATH]) > v[VOCAB_DATE]:
@@ -206,6 +210,13 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
         win[i].bind('<Enter>', '+ENTER+')
         win[i].bind('<Leave>', '+LEAVE+')
         win[i].bind('<Button-3>', '+RCLICK+')
+    dir_ = win['-DIR-']
+    dir_.Widget.bind('<Enter>', lambda e: dir_(
+        image_filename=cfg['image-folder-on']))
+    dir_.Widget.bind('<Leave>', lambda e: dir_(
+        image_filename=cfg['image-folder-off']))
+    dir_.Widget.bind('<Button-1>', lambda e: ctypes.windll.shell32.ShellExecuteW(
+        None, u'open', u'explorer.exe', u'/n,/select, ' + CFG_PATH, None, 1))
 
     # Window event loop
     while True:
