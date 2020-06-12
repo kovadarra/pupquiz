@@ -21,7 +21,6 @@ def weighted_pick(ls, rd):
 
 FORM_WIDTH = 28
 TTS_PATH = data_path('tts.mp3')
-spoken_part_search = re.compile(cfg['patt-word-spoken-part']).search
 
 
 def get_tts_path():
@@ -62,10 +61,15 @@ class Quiz:
         return sum(i*len(l) for i, l in enumerate(self.__words))
 
     def __pick_word(self):
+        # Get non-empty buckets, position new word bucket at nwi
+        nwi = cfg['new-words-index']
         ls, rd = self.__words, self.__sets.rd
-        l = weighted_pick([l for l in [*ls[1:2], ls[0], *ls[3:]] if l], rd)
+        ls = [l for l in ls[1:nwi] + [ls[0]] + ls[nwi+1:] if l]
+
+        # Pick a random word, favor lower indices
+        l = ls[int(rd.random() ** cfg['critical-word-weight'] * len(ls))]
         res = l.pop(rd.randrange(len(l)))
-        i = next(i for i, v in enumerate(ls) if v is l)
+        i = self.__words.index(l)
         return i == 0, i, res
 
     def run(self):
@@ -177,5 +181,5 @@ def main_loop():
 
         # Restore common config
         cfg.update(vconfig)
-        
+
     save_session_json()

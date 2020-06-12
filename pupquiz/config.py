@@ -10,6 +10,35 @@ def data_path(*args):
 
 
 cfg = {
+    # Regex patterns
+    'patt-vocab-config': r'^\s*<!--(.+)-->\r?\n',
+    'patt-set': r'(?i)^(?P<set>.+\\)(?P<img>.+\.(jpg|gif|png))$',
+    'patt-gif-loop-pause': r'(?i)(?<!p)\.gif$',
+    'patt-vocab-word': r'(?m)^(?P<q>.+)\n[^\S\n]*~ (?P<a>.+)',
+    'patt-vocab-word-subdivider': r'<br>|<i>.*?</i>',
+    'patt-word-spoken-part': r'^[^,]+',
+    'patt-vocab-file': r"""(?ms)^title: "(?P<title>.+?)"$.+?^content: '''(?P<contents>.+?^)'''""",
+
+    # Selection screen
+    'select-hotkeys': '123456789',
+
+    # Vocabularies
+    'vocab-file-types': [['Vocabulary Files', '*.cson']],
+    
+    # Sets
+    'common-sets': [data_path('Default Assets')],
+    'gif-pause-duration': 1.2,
+
+    # Session
+    'spoken-lang': '',
+    'new-words-index': 2,
+    'translate-url': 'https://translate.google.com/#auto/en/{}',
+    'critical-word-weight': 3.5,
+
+    # Locale
+    'locale': ['Pup Quiz', 'Click on a vocabulary to quiz for it.\nAdd a vocabulary by selecting an empty slot.\nDelete a vocabulary with a right-click.', '{} - Pup Quiz', 'Welcome to Pup Quiz!', 'Correct! {:.2f}%', '{}', 'Added to word stock', 'Got it!', 'Submit', 'Translate', 'Translation opened', 'Reset', 'Menu', 'Are you sure you want to delete "{}"?', 'Are you sure you want to reset progress on "{}"?'],
+    
+    # Styling
     'app-icon': resource_filename('pupquiz.resources', 'icon.ico'),
     'color-text': '#f0eff4',
     'color-select-info-guide': '#f0eff4',
@@ -25,23 +54,11 @@ cfg = {
     'color-info-translation-opened': '#f0eff4',
     'select-info-guide-width': 4,
     'select-info-guide-height': 59,
-    'select-hotkeys': '123456789',
-    'patt-vocab-config': r'^\s*<!--(.+)-->\r?\n',
-    'patt-set': r'(?i)^(?P<set>.+\\)(?P<img>.+\.(jpg|gif|png))$',
-    'patt-gif-loop-pause': r'(?i)(?<!p)\.gif$',
-    'patt-vocab-word': r'(?m)^(?P<q>.+)\n[^\S\n]*~ (?P<a>.+)',
-    'patt-vocab-word-subdivider': r'<br>|<i>.*?</i>',
-    'patt-word-spoken-part': r'^[^,]+',
-    'patt-vocab-file': r"""(?ms)^title: "(?P<title>.+?)"$.+?^content: '''(?P<contents>.+?^)'''""",
-    'vocab-file-types': [['Vocabulary Files', '*.cson']],
-    'common-sets': [data_path('Default Assets')],
-    'gif-pause-duration': 1.2,
     'pad-top-status': 150,
     'image-max-width': 400,
     'image-max-height': 500,
     'control-border-width': 0,
     'font': '"Berlin Sans FB" 13',
-    'spoken-lang': '',
     'thumbnail-placeholder-color-hover': '#626262',
     'thumbnail-placeholder-color-default': '#454545',
     'thumbnail-placeholder-width': 10,
@@ -57,8 +74,6 @@ cfg = {
     'thumbnail-undone-brightness': 0.75,
     'thumbnail-undone-saturation': 0.4,
     'thumbnail-undone-blur-radius': 3,
-    'translate-url': 'https://translate.google.com/#auto/en/{}',
-    'locale': ['Pup Quiz', 'Click on a vocabulary to quiz for it.\nAdd a vocabulary by selecting an empty slot.\nDelete a vocabulary with a right-click.', '{} - Pup Quiz', 'Welcome to Pup Quiz!', 'Correct! {:.2f}%', '{}', 'Added to word stock', 'Got it!', 'Submit', 'Translate', 'Translation opened', 'Reset', 'Menu', 'Are you sure you want to delete "{}"?', 'Are you sure you want to reset progress on "{}"?']
 }
 
 
