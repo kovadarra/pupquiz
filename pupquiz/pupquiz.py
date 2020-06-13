@@ -38,15 +38,9 @@ class Quiz:
         self.__nwords = sum(map(len, self.__words))
 
         # Step = movement to an adjacent bucket
-        self.__nsteps = self.__nwords * (len(self.__words)-1)
+        self.__nsteps = self.__nwords * (len(self.__words)-2)
         self.__nsets = len(sets)
         self.__steps_per_set = self.__nsteps / self.__nsets
-
-    def __set_idx(self) -> int:
-        return int(self.__cur_steps() / self.__steps_per_set)
-
-    def __cur_set(self) -> Set:
-        return self.__sets[self.__set_idx()]
 
     def __cur_img(self) -> str:
         cur_steps = self.__cur_steps()
@@ -58,7 +52,7 @@ class Quiz:
         return cur_set, cur_img
 
     def __cur_steps(self):
-        return sum(i*len(l) for i, l in enumerate(self.__words))
+        return sum(i*len(l) for i, l in enumerate(self.__words[2:], start=1))
 
     def __pick_word(self):
         # Get non-empty buckets, position new word bucket at nwi
