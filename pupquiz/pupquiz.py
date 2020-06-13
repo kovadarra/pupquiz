@@ -63,7 +63,7 @@ class Quiz:
         # Pick a random word, favor lower indices
         l = ls[int(rd.random() ** cfg['critical-word-weight'] * len(ls))]
         res = l.pop(rd.randrange(len(l)))
-        i = self.__words.index(l)
+        i = next(i for i, l_ in enumerate(self.__words) if l_ is l)
         return i == 0, i, res
 
     def run(self):
@@ -74,8 +74,8 @@ class Quiz:
                   ] + [[sg.In(key=0, focus=True, pad=(0, 0), size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
 
         # Create window
-        self.__win = sg.Window(CFG_APPNAME_SES.format(self.__v[VOCAB_NAME]), [[sg.Image(size=CANVAS_SZ, background_color=cfg['color-background'], key='-CANVAS-'), sg.Column(
-            layout, pad=((10, 0), 0))]], location=ses[SES_WIN_POS], finalize=True, font=cfg['font'], border_depth=0)
+        self.__win = sg.Window(CFG_APPNAME_SES.format(self.__v[VOCAB_NAME]), [[sg.Image(size=CANVAS_SZ, background_color=cfg['color-background'], key='-CANVAS-', pad=(0, 0)), sg.Column(
+            layout, pad=((10, 0), 0))]], location=ses[SES_WIN_POS], finalize=True, font=cfg['font'], border_depth=0, margins=(0, 0))
         self.__win.TKroot.focus_force()
         canvas = Canvas(self.__win['-CANVAS-'])
 

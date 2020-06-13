@@ -14,7 +14,7 @@ import ujson
 
 from .config import (CFG_APPNAME, CFG_CONFIRM_DELETE, CFG_CONFIRM_RESET,
                      CFG_PATH, CFG_SELECT_INFO, cfg, data_path)
-from .thumbnail import encode, get_def_thumbnail, make_thumbnail
+from .graphics import encode, get_def_thumbnail, make_thumbnail
 
 SES_SET_DIRS = ''
 SES_LAST_DIR = 'last-dir'

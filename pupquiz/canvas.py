@@ -7,7 +7,7 @@ from PIL import Image
 
 from .config import cfg
 from .session import Set
-from .thumbnail import encode
+from .graphics import encode
 
 CANVAS_SZ = (cfg['image-max-width'], cfg['image-max-height'])
 ppausegif = re.compile(cfg['patt-gif-loop-pause']).search
