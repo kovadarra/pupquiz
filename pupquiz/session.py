@@ -1,5 +1,4 @@
 import ctypes
-from .config import CFG_PATH
 import glob
 import os
 import re
@@ -223,7 +222,7 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
         while True:
             event, values = win.read(timeout=500)
             if event is None:
-                win.close()
+                win.TKroot.destroy()
                 del win
                 return None, None
             ses[SES_WIN_POS] = list(win.CurrentLocation())
@@ -242,6 +241,7 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                 if all(not x for x in v[VOCAB_WORDS][:-1]):
                     remove_vocab(event, win)
                     continue
+                win.TKroot.destroy()
                 win.close()
                 del win
                 return v, SetProvider(v)

@@ -1,18 +1,17 @@
-from .session import VOCAB_CONFIG
 import os
 import re
 import webbrowser
 from contextlib import suppress
+from threading import Lock, Thread
 
-import PySimpleGUI as sg
 from gtts import gTTS
 from playsound import playsound
 
 from .canvas import CANVAS_SZ, Canvas
 from .config import *
-from .session import (SES_WIN_POS, VOCAB_NAME, VOCAB_WORDS, Set, SetProvider,
-                      calc_progress, get_vocabulary, save_session_json, ses,
-                      update_vocab)
+from .session import (SES_WIN_POS, VOCAB_CONFIG, VOCAB_NAME, VOCAB_WORDS, Set,
+                      SetProvider, calc_progress, get_vocabulary,
+                      save_session_json, ses, sg, update_vocab)
 
 
 def weighted_pick(ls, rd):
@@ -27,6 +26,12 @@ def get_tts_path():
     if os.path.exists(TTS_PATH):
         os.remove(TTS_PATH)
     return TTS_PATH
+
+
+def speak_tts(tts: gTTS):
+    tts_path = get_tts_path()
+    tts.save(tts_path)
+    playsound(tts_path)
 
 
 class Quiz:
@@ -70,22 +75,34 @@ class Quiz:
         # Create layout; image on the left, quiz form on the right
         def buts(*args):
             return [sg.B(text, bind_return_key=key == '-OK-', key=key, pad=((0, 7), (10, 0))) for text, key in args]
-        layout = [[sg.T(CFG_GREET, pad=((20, 0), (cfg['pad-top-status'], 0)), key='-RES-', size=(FORM_WIDTH, None))], [sg.T(key='-TXT-', pad=(0, (30, 10)), size=(FORM_WIDTH, None))]
+        layout = [[sg.T(CFG_GREET, pad=(0, 0), key='-RES-', size=(FORM_WIDTH, None))], [sg.T(key='-TXT-', pad=(0, (30, 10)), size=(FORM_WIDTH, None))]
                   ] + [[sg.In(key=0, focus=True, pad=(0, 0), size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
 
         # Create window
-        self.__win = sg.Window(CFG_APPNAME_SES.format(self.__v[VOCAB_NAME]), [[sg.Image(size=CANVAS_SZ, background_color=cfg['color-background'], key='-CANVAS-', pad=(0, 0)), sg.Column(
-            layout, pad=((10, 0), 0))]], location=ses[SES_WIN_POS], finalize=True, font=cfg['font'], border_depth=0, margins=(0, 0))
-        self.__win.TKroot.focus_force()
-        canvas = Canvas(self.__win['-CANVAS-'])
+        self.__win = sg.Window(CFG_APPNAME_SES.format(self.__v[VOCAB_NAME]), [[sg.Image(size=CANVAS_SZ, key='-IM1-'), sg.Column([[sg.Image(size=(0, 0), key='-IM2-')], [sg.Col(layout, key='-CCARD-', pad=(10, 10), size=(300, 200))], [
+                               sg.Image(size=(0, 0), key='-IM3-')]])]], location=ses[SES_WIN_POS], finalize=True, font=cfg['font'], border_depth=0, margins=(0, 0), element_padding=(0, 0))
+        self.__win.hide()
+        hidden = True
+        canvas = Canvas(self.__win)
 
         no_advance = True
         while True:
+            # Set image
             cur_set, cur_img = self.__cur_img()
             canvas.set_image(cur_set, cur_img, no_advance)
             no_advance = True
+
+            # Pick word
             new, l_idx, cur_word = self.__pick_word()
             self.__win['-OK-'].update(CFG_NEWWORD if new else CFG_GUESS)
+
+            # Speak new words
+            if new and cfg['spoken-lang']:
+                m = re.search(cfg['patt-word-spoken-part'], cur_word[0])
+                if m:
+                    # For some reason I get 'loop not on main thread' error if I don't run gTTS here
+                    Thread(target=speak_tts, args=(
+                        gTTS(m[0], lang=cfg['spoken-lang']),), daemon=True).start()
 
             # Reset controls
             self.__win['-TRANSL-'].update(disabled=len(cur_word) != 2)
@@ -97,15 +114,11 @@ class Quiz:
                                      text_color=col, background_color=bgcol, select=not new)
             self.__win[0].set_focus()
 
-            # Speak new words
-            if new and cfg['spoken-lang']:
-                m = re.search(cfg['patt-word-spoken-part'], cur_word[0])
-                if m:
-                    self.__win.read(0)
-                    tts_path = get_tts_path()
-                    gTTS(text=m[0], lang=cfg['spoken-lang'],
-                         slow=False).save(tts_path)
-                    playsound(tts_path)
+            # Unhide window, if hidden
+            if hidden:
+                self.__win.un_hide()
+                self.__win.TKroot.focus_force()
+                hidden = False
 
             # Retrieve input
             while True:
@@ -151,6 +164,7 @@ class Quiz:
                                                    text_color=cfg['color-info-incorrect'])
 
         # Submit progress to disk and quit
+        self.__win.TKroot.destroy()
         self.__win.close()
         del self.__win
         update_vocab(self.__v)

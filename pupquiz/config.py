@@ -1,7 +1,9 @@
 import ctypes
-from pkg_resources import resource_filename
-import PySimpleGUI as sg
 import os
+
+import PySimpleGUI as sg
+from pkg_resources import resource_filename
+
 import ujson
 
 
@@ -24,7 +26,7 @@ cfg = {
 
     # Vocabularies
     'vocab-file-types': [['Vocabulary Files', '*.cson']],
-    
+
     # Sets
     'common-sets': [data_path('Default Assets')],
     'gif-pause-duration': 1.2,
@@ -37,7 +39,7 @@ cfg = {
 
     # Locale
     'locale': ['Pup Quiz', 'Click on a vocabulary to quiz for it.\nAdd a vocabulary by selecting an empty slot.\nDelete a vocabulary with a right-click.', '{} - Pup Quiz', 'Welcome to Pup Quiz!', 'Correct! {:.2f}%', '{}', 'Added to word stock', 'Got it!', 'Submit', 'Translate', 'Translation opened', 'Reset', 'Menu', 'Are you sure you want to delete "{}"?', 'Are you sure you want to reset progress on "{}"?'],
-    
+
     # Styling
     'app-icon': resource_filename('pupquiz.resources', 'icon.ico'),
     'image-folder-on': resource_filename('pupquiz.resources', 'folder-on.png'),
@@ -76,6 +78,9 @@ cfg = {
     'thumbnail-undone-brightness': 0.75,
     'thumbnail-undone-saturation': 0.4,
     'thumbnail-undone-blur-radius': 3,
+    'background-brightness': 0.6,
+    'background-saturation': 0.8,
+    'background-blur-radius': 10,
 }
 
 

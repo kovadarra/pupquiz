@@ -41,16 +41,17 @@ def get_def_thumbnail():
     return gen_def_thumb(True), gen_def_thumb(False)
 
 
-def blur(im):
-    bright = cfg['thumbnail-undone-brightness']
-    satur = cfg['thumbnail-undone-saturation']
+def blur(im, thumbnail=True) -> Image.Image:
+    if thumbnail:
+        bright, satur, blur = cfg['thumbnail-undone-brightness'], cfg['thumbnail-undone-saturation'], cfg['thumbnail-undone-blur-radius']
+    else:
+        bright, satur, blur = cfg['background-brightness'], cfg['background-saturation'], cfg['background-blur-radius']
     bleed = (1-satur)/2
     satur, bleed = satur*bright, bleed*bright
     matrix = (satur, bleed, bleed, 0,
               bleed, satur, bleed, 0,
               bleed, bleed, satur, 0)
-    return im.filter(ImageFilter.GaussianBlur(
-        cfg['thumbnail-undone-blur-radius'])).convert('RGB', matrix)
+    return im.convert('RGB').filter(ImageFilter.GaussianBlur(blur)).convert('RGB', matrix)
 
 
 # def make_thumbnails()
