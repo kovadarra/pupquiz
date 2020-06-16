@@ -1,6 +1,8 @@
 import ctypes
 import glob
+import json
 import os
+import pickle
 import re
 from itertools import chain, groupby, islice
 from operator import itemgetter
@@ -8,8 +10,6 @@ from random import Random
 from typing import Dict, Iterator, List, Optional, Tuple
 
 import PySimpleGUI as sg
-
-import ujson
 
 from .config import (CFG_APPNAME, CFG_CONFIRM_DELETE, CFG_CONFIRM_RESET,
                      CFG_PATH, CFG_SELECT_INFO, cfg, data_path)
@@ -50,8 +50,8 @@ def new_vocab() -> dict:
 
 
 try:
-    with open(data_path('session.json'), 'r') as f:
-        ses = ujson.load(f)
+    with open(data_path('session'), 'rb') as f:
+        ses = pickle.load(f)
 except FileNotFoundError:
     ses = {SES_LAST_DIR: '', SES_CFG_DATE: 0, SES_SELECT_GUIDE_HEIGHT: None, SES_WIN_POS: (None, None),
            SES_VOCABS: [new_vocab() for _ in range(NVOCABS)]}
@@ -74,8 +74,8 @@ def calc_progress(words):
 
 
 def save_session_json():
-    with open(data_path('session.json'), 'w') as f:
-        ujson.dump(ses, f)
+    with open(data_path('session'), 'wb') as f:
+        pickle.dump(ses, f)
 
 
 def update_thumbnail(v: dict):
@@ -107,7 +107,7 @@ def update_vocab(v: dict):
     v[VOCAB_WORDS][0] = [*words]
     v[VOCAB_DATE] = os.path.getmtime(v[VOCAB_PATH])
     v[VOCAB_NAME] = title
-    v[VOCAB_CONFIG] = ujson.loads(mconfig[1]) if mconfig else {}
+    v[VOCAB_CONFIG] = json.loads(mconfig[1]) if mconfig else {}
     update_thumbnail(v)
 
 

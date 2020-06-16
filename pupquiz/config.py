@@ -1,10 +1,9 @@
 import ctypes
+import json
 import os
 
 import PySimpleGUI as sg
 from pkg_resources import resource_filename
-
-import ujson
 
 
 def data_path(*args):
@@ -99,10 +98,10 @@ if not os.path.isdir(data_path('Default Assets')):
 
 if not os.path.isfile(data_path('config-default.json')):
     with open(data_path('config-default.json'), 'w') as f:
-        ujson.dump(cfg, f, indent=4)  # for reference
+        json.dump(cfg, f, indent=4)  # for reference
 try:
     with open(CFG_PATH, 'r') as f:
-        cfg.update(ujson.load(f) or {})  # apply user preference
+        cfg.update(json.load(f) or {})  # apply user preference
 except FileNotFoundError:
     with open(CFG_PATH, 'w') as f:
         f.write('{\n}')
