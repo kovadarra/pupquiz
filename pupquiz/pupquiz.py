@@ -22,16 +22,11 @@ FORM_WIDTH = 28
 TTS_PATH = data_path('tts.mp3')
 
 
-def get_tts_path():
+def speak_tts(tts: gTTS):
     if os.path.exists(TTS_PATH):
         os.remove(TTS_PATH)
-    return TTS_PATH
-
-
-def speak_tts(tts: gTTS):
-    tts_path = get_tts_path()
-    tts.save(tts_path)
-    playsound(tts_path)
+    tts.save(TTS_PATH)
+    playsound(TTS_PATH)
 
 
 class Quiz:
