@@ -25,34 +25,23 @@ TTS_PATH = data_path('tts.mp3')
 def speak_tts(tts: gTTS):
     if os.path.exists(TTS_PATH):
         os.remove(TTS_PATH)
-    tts.save(TTS_PATH)
-    playsound(TTS_PATH)
+    try:
+        tts.save(TTS_PATH)
+        playsound(TTS_PATH)
+    except:
+        pass
 
 
 class Quiz:
     def __init__(self, v: dict, sets: SetProvider):
         self.__v = v
         self.__sets = sets
-
         self.__words = v[VOCAB_WORDS]
         self.__nwords = sum(map(len, self.__words))
-
-        # Step = movement to an adjacent bucket
         self.__nsteps = self.__nwords * (len(self.__words)-2)
-        self.__nsets = len(sets)
-        self.__steps_per_set = self.__nsteps / self.__nsets
 
-    def __cur_img(self) -> str:
-        cur_steps = self.__cur_steps()
-        cur_set = self.__sets[int(cur_steps / self.__steps_per_set)]
-        steps_per_img = self.__steps_per_set / len(cur_set)
-
-        cur_img = int(cur_steps % self.__steps_per_set / steps_per_img)
-
-        return cur_set, cur_img
-
-    def __cur_steps(self):
-        return sum(i*len(l) for i, l in enumerate(self.__words[2:], start=1))
+    def __cur_step(self):
+        return sum(i*len(l) for i, l in enumerate(self.__words[2:], start=1)) / self.__nsteps
 
     def __pick_word(self):
         # Get non-empty buckets, position new word bucket at nwi
@@ -80,10 +69,10 @@ class Quiz:
         hidden = True
         canvas = Canvas(self.__win)
 
-        no_advance = True
+        no_advance = False
         while True:
             # Set image
-            cur_set, cur_img = self.__cur_img()
+            cur_set, cur_img = self.__sets.get_image(self.__cur_step())
             canvas.set_image(cur_set, cur_img, no_advance)
             no_advance = True
 
