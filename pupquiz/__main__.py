@@ -1,7 +1,4 @@
 if __name__ == '__main__':
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
     import PySimpleGUI as sg
     from pupquiz.config import CFG_APPNAME
     from sys import argv

@@ -1,10 +1,25 @@
 from base64 import b64encode
 from io import BytesIO
 
-from PIL import (Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter,
-                 ImageFont, ImageMath, ImageOps)
+# The formatter insisted on reordering the imports, so...
+import matplotlib
 
 from .config import cfg
+
+matplotlib.use('Agg')
+plt = __import__('matplotlib.pyplot', globals(), locals(), [], 0)
+
+_temp = __import__('PIL', globals(), locals(), [
+                   'Image', 'ImageChops', 'ImageDraw', 'ImageEnhance', 'ImageFilter', 'ImageFont', 'ImageMath', 'ImageOps'], 0)
+Image = _temp.Image
+ImageChops = _temp.ImageChops
+ImageDraw = _temp.ImageDraw
+ImageEnhance = _temp.ImageEnhance
+ImageFilter = _temp.ImageFilter
+ImageFont = _temp.ImageFont
+ImageMath = _temp.ImageMath
+ImageOps = _temp.ImageOps
+
 
 sz = cfg['thumbnail-size']
 sample = cfg['thumbnail-sample']
@@ -52,9 +67,6 @@ def blur(im, thumbnail=True) -> Image.Image:
               bleed, satur, bleed, 0,
               bleed, bleed, satur, 0)
     return im.convert('RGB').filter(ImageFilter.GaussianBlur(blur)).convert('RGB', matrix)
-
-
-# def make_thumbnails()
 
 
 def make_thumbnail(path, label, progress):

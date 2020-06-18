@@ -99,7 +99,7 @@ class Canvas:
         Submit a new image for presentation. Will be prepared on another thread.
         '''
         if self.__set != set_:
-            self.__set, self.__img_idx = set_, 0
+            self.__set, self.__img_idx = set_, 0 if no_advance else img_idx
         elif self.__img_idx > img_idx:
             self.__img_idx = img_idx
         elif self.__img_idx < img_idx and not no_advance:
