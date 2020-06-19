@@ -109,7 +109,9 @@ def get_sets(*paths) -> Dict[str, List[str]]:
 
 
 def calc_progress(words):
-    return sum(i*len(l) for i, l in enumerate(words)) / (sum(map(len, words))*(len(words)-1))
+    nwords = sum(map(len, words))
+    nsteps = nwords * (len(words)-2)
+    return sum(i*len(l) for i, l in enumerate(words[2:], start=1)) / nsteps
 
 
 def save_session_json():
@@ -118,14 +120,10 @@ def save_session_json():
 
 
 def update_thumbnail(v: dict):
-    nwords = sum(map(len, v[VOCAB_WORDS]))
-    nsteps = nwords * (len(v[VOCAB_WORDS])-2)
-    step = sum(i*len(l)
-               for i, l in enumerate(v[VOCAB_WORDS][2:], start=1)) / nsteps
-    set_, img_idx = SetProvider(v).get_image(step)
-
+    progress = calc_progress(v[VOCAB_WORDS])
+    set_, img = SetProvider(v).get_image(progress)
     v[VOCAB_ICON_ON], v[VOCAB_ICON_OFF] = make_thumbnail(
-        set_[img_idx], v[VOCAB_NAME], calc_progress(v[VOCAB_WORDS]))
+        set_[img], v[VOCAB_NAME], progress)
 
 
 def update_vocab(v: dict):

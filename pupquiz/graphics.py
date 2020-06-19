@@ -10,14 +10,12 @@ matplotlib.use('Agg')
 plt = __import__('matplotlib.pyplot', globals(), locals(), [], 0)
 
 _temp = __import__('PIL', globals(), locals(), [
-                   'Image', 'ImageChops', 'ImageDraw', 'ImageEnhance', 'ImageFilter', 'ImageFont', 'ImageMath', 'ImageOps'], 0)
+                   'Image', 'ImageDraw', 'ImageEnhance', 'ImageFilter', 'ImageFont', 'ImageOps'], 0)
 Image = _temp.Image
-ImageChops = _temp.ImageChops
 ImageDraw = _temp.ImageDraw
 ImageEnhance = _temp.ImageEnhance
 ImageFilter = _temp.ImageFilter
 ImageFont = _temp.ImageFont
-ImageMath = _temp.ImageMath
 ImageOps = _temp.ImageOps
 
 

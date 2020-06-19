@@ -37,7 +37,7 @@ cfg = {
     'critical-word-weight': 3.5,
 
     # Locale
-    'locale': ['Pup Quiz', 'Click on a vocabulary to quiz for it.\nAdd a vocabulary by selecting an empty slot.\nDelete a vocabulary with a right-click.', '{} - Pup Quiz', 'Welcome to Pup Quiz!', 'Correct! {:.2f}%', '{}', 'Added to word stock', 'Got it!', 'Submit', 'Translate', 'Translation opened', 'Reset', 'Menu', 'Are you sure you want to delete "{}"?', 'Are you sure you want to reset progress on "{}"?'],
+    'locale': ['Pup Quiz', 'Click on a vocabulary to quiz for it.\nAdd a vocabulary by selecting an empty slot.\nDelete a vocabulary with a right-click.', '{} - Pup Quiz', 'Welcome to Pup Quiz!', 'Correct!', '{}', 'Added to word stock', 'Got it!', 'Submit', 'Translate', 'Translation opened', 'Reset', 'Menu', 'Are you sure you want to delete "{}"?', 'Are you sure you want to reset progress on "{}"?'],
 
     # Styling
     'app-icon': resource_filename('pupquiz.resources', 'icon.ico'),

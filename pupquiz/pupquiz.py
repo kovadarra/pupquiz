@@ -12,6 +12,7 @@ from .config import *
 from .session import (SES_WIN_POS, VOCAB_CONFIG, VOCAB_NAME, VOCAB_WORDS, Set,
                       SetProvider, calc_progress, get_vocabulary,
                       save_session_json, ses, sg, update_vocab)
+from .word_iterator import WordIterator
 
 
 def weighted_pick(ls, rd):
@@ -40,21 +41,6 @@ class Quiz:
         self.__nwords = sum(map(len, self.__words))
         self.__nsteps = self.__nwords * (len(self.__words)-2)
 
-    def __cur_step(self):
-        return sum(i*len(l) for i, l in enumerate(self.__words[2:], start=1)) / self.__nsteps
-
-    def __pick_word(self):
-        # Get non-empty buckets, position new word bucket at nwi
-        nwi = cfg['new-words-index']
-        ls, rd = self.__words, self.__sets.rd
-        ls = [l for l in ls[1:nwi] + [ls[0]] + ls[nwi+1:] if l]
-
-        # Pick a random word, favor lower indices
-        l = ls[int(rd.random() ** cfg['critical-word-weight'] * len(ls))]
-        res = l.pop(rd.randrange(len(l)))
-        i = next(i for i, l_ in enumerate(self.__words) if l_ is l)
-        return i == 0, i, res
-
     def run(self):
         # Create layout; image on the left, quiz form on the right
         def buts(*args):
@@ -63,94 +49,92 @@ class Quiz:
                   ] + [[sg.In(key=0, focus=True, pad=(0, 0), size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
 
         # Create window
-        self.__win = sg.Window(CFG_APPNAME_SES.format(self.__v[VOCAB_NAME]), [[sg.Image(size=CANVAS_SZ, key='-IM1-'), sg.Column([[sg.Image(size=(0, 0), key='-IM2-')], [sg.Col(layout, key='-CCARD-', pad=(10, 10), size=(300, 200))], [
-                               sg.Image(size=(0, 0), key='-IM3-')]])]], location=ses[SES_WIN_POS], finalize=True, font=cfg['font'], border_depth=0, margins=(0, 0), element_padding=(0, 0))
-        self.__win.hide()
+        win = sg.Window(CFG_APPNAME_SES.format(self.__v[VOCAB_NAME]), [[sg.Image(size=CANVAS_SZ, key='-IM1-'), sg.Column([[sg.Image(size=(0, 0), key='-IM2-')], [sg.Col(layout, key='-CCARD-', pad=(10, 10), size=(300, 200))], [
+            sg.Image(size=(0, 0), key='-IM3-')]])]], location=ses[SES_WIN_POS], finalize=True, font=cfg['font'], border_depth=0, margins=(0, 0), element_padding=(0, 0))
+        win.hide()
         hidden = True
-        canvas = Canvas(self.__win)
+        canvas = Canvas(win)
 
         no_advance = False
-        while True:
-            # Set image
-            cur_set, cur_img = self.__sets.get_image(self.__cur_step())
-            canvas.set_image(cur_set, cur_img, no_advance)
-            no_advance = True
+        it = WordIterator(self.__words)
+        for new, bucket, progress, word in it:
+            print(f'{progress}')
+            win['-OK-'].update(CFG_NEWWORD if new else CFG_GUESS)
 
-            # Pick word
-            new, l_idx, cur_word = self.__pick_word()
-            self.__win['-OK-'].update(CFG_NEWWORD if new else CFG_GUESS)
+            # Set image
+            set_, img = self.__sets.get_image(progress)
+            canvas.set_image(set_, img, no_advance)
+            no_advance = True
 
             # Speak new words
             if new and cfg['spoken-lang']:
-                m = re.search(cfg['patt-word-spoken-part'], cur_word[0])
+                m = re.search(cfg['patt-word-spoken-part'], word[0])
                 if m:
                     # For some reason I get 'loop not on main thread' error if I don't run gTTS here
                     Thread(target=speak_tts, args=(
                         gTTS(m[0], lang=cfg['spoken-lang']),), daemon=True).start()
 
             # Reset controls
-            self.__win['-TRANSL-'].update(disabled=len(cur_word) != 2)
-            self.__win['-TXT-'].update(cur_word[-1])
+            win['-TRANSL-'].update(disabled=len(word) != 2)
+            win['-TXT-'].update(word[-1])
             col, bgcol = (cfg['color-text'], cfg['color-background']) if new else (
                 cfg['color-input-text'], cfg['color-input-background'])
             for i in range(1):
-                self.__win[i].update(cur_word[i] if new else '',
-                                     text_color=col, background_color=bgcol, select=not new)
-            self.__win[0].set_focus()
+                win[i].update(word[i] if new else '',
+                              text_color=col, background_color=bgcol, select=not new)
+            win[0].set_focus()
 
             # Unhide window, if hidden
             if hidden:
-                self.__win.un_hide()
-                self.__win.TKroot.focus_force()
+                win.un_hide()
+                win.TKroot.focus_force()
                 hidden = False
 
             # Retrieve input
             while True:
-                event, values = self.__win.read(10)
+                event, values = win.read(10)
                 if event != sg.TIMEOUT_KEY:
                     if event == '-RESET-':
                         if not self.__sets.reset_progress():
                             continue
                     break
-                ses[SES_WIN_POS] = list(self.__win.CurrentLocation())
+                ses[SES_WIN_POS] = list(win.CurrentLocation())
                 canvas.update()
             if event in (None, '-MENU-'):
-                self.__words[l_idx].append(cur_word)
+                self.__words[bucket].append(word)
                 break
 
             # 'Translate' button
             elif event == '-TRANSL-':
-                self.__words[l_idx].append(cur_word)
-                self.__win['-RES-'].update(CFG_TRANSLATE_OPENED,
-                                           text_color=cfg['color-info-translation-opened'])
-                webbrowser.open(cfg['translate-url'].format(cur_word[0]))
+                self.__words[bucket].append(word)
+                win['-RES-'].update(CFG_TRANSLATE_OPENED,
+                                    text_color=cfg['color-info-translation-opened'])
+                webbrowser.open(cfg['translate-url'].format(word[0]))
 
-            # 'Got it!'/'Submit' button
-            elif event == '-OK-':
-                if new:
-                    self.__words[1].append(cur_word)
-                    self.__win['-RES-'].update(
-                        CFG_ADDWORD, text_color=cfg['color-info-new-word'])
+            # 'Got it!' button
+            elif new:
+                it.add_word(1, word)
+                win['-RES-'].update(CFG_ADDWORD,
+                                    text_color=cfg['color-info-new-word'])
+
+            # 'Submit' button
+            else:
+                # Compare answer with solution
+                guess = list(values.values())
+                if all(map(lambda x: x[0] in [y.strip() for y in x[1].split(',')], zip(guess, word[:-1]))):
+                    it.add_word(bucket+1, word)
+                    win['-RES-'].update(CFG_CORRECT,
+                                        text_color=cfg['color-info-correct'])
+                    no_advance = False
                 else:
-                    # Compare answer with solution
-                    guess = list(values.values())
-                    if all(map(lambda x: x[0] in [y.strip() for y in x[1].split(',')], zip(guess, cur_word[:-1]))):
-                        self.__words[min(len(self.__words)-1,
-                                         l_idx+1)].append(cur_word)
-                        if all(not x for x in self.__words[:-1]):
-                            break
-                        self.__win['-RES-'].update(
-                            CFG_CORRECT.format(calc_progress(self.__words)*100), text_color=cfg['color-info-correct'])
-                        no_advance = False
-                    else:
-                        self.__words[1].append(cur_word)
-                        self.__win['-RES-'].update(CFG_INCORRECT.format(', '.join(cur_word[:-1])),
-                                                   text_color=cfg['color-info-incorrect'])
+                    it.add_word(1, word)
+                    win['-RES-'].update(CFG_INCORRECT.format(
+                        ', '.join(word[:-1])), text_color=cfg['color-info-incorrect'])
 
         # Submit progress to disk and quit
-        self.__win.TKroot.destroy()
-        self.__win.close()
-        del self.__win
+        win.TKroot.destroy()
+        win.close()
+        del win
         update_vocab(self.__v)
         return event is '-MENU-'
 
