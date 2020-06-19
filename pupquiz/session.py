@@ -50,26 +50,22 @@ class SetProvider:
         self.__v = v
         self.__sets = {
             **get_sets(os.path.dirname(v[VOCAB_PATH])), **common_sets}
-        self.__rd = Random(ses[SES_VOCABS].index(v))
-        self.keys = self.__rd.sample([*self.__sets], len(self.__sets))
+        self.__keys = Random(ses[SES_VOCABS].index(v)).sample(
+            [*self.__sets], len(self.__sets))
 
         # Remove references to outdated sets (gallery info comes from disk)
         self.__gallery = v[VOCAB_GALLERY] = [
-            *({*v[VOCAB_GALLERY]} & {*self.keys})]
+            *({*v[VOCAB_GALLERY]} & {*self.__keys})]
 
         # Order keys so that unlocked are first, then locked
-        self.keys = sorted(self.keys, key=lambda x: x not in self.__gallery)
-
-    @property
-    def rd(self):
-        'A random device seeded by vocabulary index'
-        return self.__rd
+        self.__keys = sorted(
+            self.__keys, key=lambda x: x not in self.__gallery)
 
     def reset_progress(self) -> bool:
         'Clears gallery, moves words to the first bucket. Calls update_vocab.'
         if sg.popup_ok_cancel(CFG_CONFIRM_RESET.format(self.__v[VOCAB_NAME]), title=CFG_APPNAME) != 'OK':
             return False
-        self.keys.extend(self.__gallery)
+        self.__keys.extend(self.__gallery)
         self.__gallery.clear()
         for l in self.__v[VOCAB_WORDS]:
             l *= 0
@@ -79,7 +75,7 @@ class SetProvider:
     def get_image(self, step: float) -> Tuple[List[str], int]:
         'Returns set and image index associated with given index value between [0,1).'
         s, i = divmod(len(self.__sets)*step, 1)
-        key = self.keys[int(s)]
+        key = self.__keys[int(s)]
         s = self.__sets[key]
         return [f'{key}{v}' for v in s], int(i*len(s))
 
