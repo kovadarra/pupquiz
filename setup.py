@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="pupquiz",
-    version="0.0.17",
+    version="0.0.18",
     author="kovadarra",
     author_email="kovadarra@users.noreply.github.com",
     description="Facilitates vocabulary acquisition",
