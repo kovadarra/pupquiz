@@ -1,23 +1,11 @@
 from base64 import b64encode
 from io import BytesIO
 
-# The formatter insisted on reordering the imports, so...
 import matplotlib
+from PIL import (Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont,
+                 ImageOps)
 
 from .config import cfg
-
-matplotlib.use('Agg')
-plt = __import__('matplotlib.pyplot', globals(), locals(), [], 0)
-
-_temp = __import__('PIL', globals(), locals(), [
-                   'Image', 'ImageDraw', 'ImageEnhance', 'ImageFilter', 'ImageFont', 'ImageOps'], 0)
-Image = _temp.Image
-ImageDraw = _temp.ImageDraw
-ImageEnhance = _temp.ImageEnhance
-ImageFilter = _temp.ImageFilter
-ImageFont = _temp.ImageFont
-ImageOps = _temp.ImageOps
-
 
 sz = cfg['thumbnail-size']
 sample = cfg['thumbnail-sample']

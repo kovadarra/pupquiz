@@ -1,3 +1,4 @@
+import gc
 import os
 import re
 import webbrowser
@@ -42,15 +43,19 @@ class Quiz:
         self.__nsteps = self.__nwords * (len(self.__words)-2)
 
     def run(self):
-        # Create layout; image on the left, quiz form on the right
+        # Create command card layout
         def buts(*args):
             return [sg.B(text, bind_return_key=key == '-OK-', key=key, pad=((0, 7), (10, 0))) for text, key in args]
-        layout = [[sg.T(CFG_GREET, pad=(0, 0), key='-RES-', size=(FORM_WIDTH, None))], [sg.T(key='-TXT-', pad=(0, (30, 10)), size=(FORM_WIDTH, None))]
-                  ] + [[sg.In(key=0, focus=True, pad=(0, 0), size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
+        cc_layout = [[sg.T(CFG_GREET, pad=(0, 0), key='-RES-', size=(FORM_WIDTH, None))], [sg.T(key='-TXT-', pad=(0, (30, 10)), size=(FORM_WIDTH, None))]
+                     ] + [[sg.In(key=0, focus=True, pad=(0, 0), size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
+
+        # Full layout including image tiles
+        layout = [[sg.Image(size=CANVAS_SZ, key='-IM1-'), sg.Column([[sg.Image(size=(0, 0), key='-IM2-')], [sg.Col(cc_layout, key='-CCARD-', pad=(10, 10), size=(300, 200))], [
+            sg.Image(size=(0, 0), key='-IM3-')]])]]
 
         # Create window
-        win = sg.Window(CFG_APPNAME_SES.format(self.__v[VOCAB_NAME]), [[sg.Image(size=CANVAS_SZ, key='-IM1-'), sg.Column([[sg.Image(size=(0, 0), key='-IM2-')], [sg.Col(layout, key='-CCARD-', pad=(10, 10), size=(300, 200))], [
-            sg.Image(size=(0, 0), key='-IM3-')]])]], location=ses[SES_WIN_POS], finalize=True, font=cfg['font'], border_depth=0, margins=(0, 0), element_padding=(0, 0))
+        win = sg.Window(CFG_APPNAME_SES.format(self.__v[VOCAB_NAME]), layout, location=ses[SES_WIN_POS],
+                        finalize=True, font=cfg['font'], border_depth=0, margins=(0, 0), element_padding=(0, 0))
         win.hide()
         hidden = True
         canvas = Canvas(win)
@@ -111,32 +116,36 @@ class Quiz:
                                     text_color=cfg['color-info-translation-opened'])
                 webbrowser.open(cfg['translate-url'].format(word[0]))
 
-            # 'Got it!' button
-            elif new:
-                it.add_word(1, word)
-                win['-RES-'].update(CFG_ADDWORD,
-                                    text_color=cfg['color-info-new-word'])
+            elif event == '-OK-':
 
-            # 'Submit' button
-            else:
-                # Compare answer with solution
-                guess = list(values.values())
-                if all(map(lambda x: x[0] in [y.strip() for y in x[1].split(',')], zip(guess, word[:-1]))):
-                    it.add_word(bucket+1, word)
-                    win['-RES-'].update(CFG_CORRECT,
-                                        text_color=cfg['color-info-correct'])
-                    no_advance = False
-                else:
+                # 'Got it!' button
+                if new:
                     it.add_word(1, word)
-                    win['-RES-'].update(CFG_INCORRECT.format(
-                        ', '.join(word[:-1])), text_color=cfg['color-info-incorrect'])
+                    win['-RES-'].update(CFG_ADDWORD,
+                                        text_color=cfg['color-info-new-word'])
+
+                # 'Submit' button
+                else:
+                    # Compare answer with solution
+                    guess = list(values.values())
+                    if all(map(lambda x: x[0] in [y.strip() for y in x[1].split(',')], zip(guess, word[:-1]))):
+                        it.add_word(bucket+1, word)
+                        win['-RES-'].update(CFG_CORRECT,
+                                            text_color=cfg['color-info-correct'])
+                        no_advance = False
+                    else:
+                        it.add_word(1, word)
+                        win['-RES-'].update(CFG_INCORRECT.format(
+                            ', '.join(word[:-1])), text_color=cfg['color-info-incorrect'])
 
         # Submit progress to disk and quit
-        win.TKroot.destroy()
         win.close()
-        del win
+        layout = None
+        cc_layout = None
+        win = None
+        gc.collect()
         update_vocab(self.__v)
-        return event is '-MENU-'
+        return type(event) == str and event == '-MENU-'
 
 
 def main_loop():

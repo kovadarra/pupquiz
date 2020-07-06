@@ -1,4 +1,5 @@
 import ctypes
+import gc
 import glob
 import json
 import os
@@ -214,8 +215,10 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
         while True:
             event, values = win.read(timeout=500)
             if event is None:
-                win.TKroot.destroy()
-                del win
+                win.close()
+                layout = None
+                win = None
+                gc.collect()
                 return None, None
             ses[SES_WIN_POS] = list(win.CurrentLocation())
             if event != sg.TIMEOUT_EVENT:
@@ -233,9 +236,10 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                 if all(not x for x in v[VOCAB_WORDS][:-1]):
                     remove_vocab(event, win)
                     continue
-                win.TKroot.destroy()
                 win.close()
-                del win
+                layout = None
+                win = None
+                gc.collect()
                 return v, SetProvider(v)
 
             path = sg.PopupGetFile('', ses[SES_LAST_DIR] or '', file_types=cfg['vocab-file-types'],
