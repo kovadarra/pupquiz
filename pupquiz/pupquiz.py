@@ -24,11 +24,11 @@ FORM_WIDTH = 28
 TTS_PATH = data_path('tts.mp3')
 
 
-def speak_tts(tts: gTTS):
+def speak_tts(word: str):
     if os.path.exists(TTS_PATH):
         os.remove(TTS_PATH)
     try:
-        tts.save(TTS_PATH)
+        gTTS(word, lang=cfg['spoken-lang']).save(TTS_PATH)
         playsound(TTS_PATH)
     except:
         pass
@@ -73,11 +73,8 @@ class Quiz:
 
             # Speak new words
             if new and cfg['spoken-lang']:
-                m = re.search(cfg['patt-word-spoken-part'], word[0])
-                if m:
-                    # For some reason I get 'loop not on main thread' error if I don't run gTTS here
-                    Thread(target=speak_tts, args=(
-                        gTTS(m[0], lang=cfg['spoken-lang']),), daemon=True).start()
+                if m := re.search(cfg['patt-word-spoken-part'], word[0]):
+                    Thread(target=speak_tts, args=(m[0],), daemon=True).start()
 
             # Reset controls
             win['-TRANSL-'].update(disabled=len(word) != 2)
