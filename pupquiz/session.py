@@ -52,7 +52,7 @@ class SetProvider:
         self.__v = v
         self.__sets = {
             **get_sets(os.path.dirname(v[VOCAB_PATH])), **common_sets}
-        self.__keys = Random(ses[SES_VOCABS].index(v)).sample(
+        self.__keys = Random(hash(v[VOCAB_NAME]) % 10).sample(
             [*self.__sets], len(self.__sets))
 
         # Remove references to outdated sets (gallery info comes from disk)
@@ -198,9 +198,10 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
 
     # Bind mouse enter, leave, and right-click events
     but_locs = []
+    winx, winy = win.TKroot.winfo_rootx(), win.TKroot.winfo_rooty()
     for i in range(9):
         w = win[i].Widget
-        but_locs.append((w.winfo_rootx(), w.winfo_rooty()))
+        but_locs.append((w.winfo_rootx() - winx, w.winfo_rooty() - winy))
         v = ses[SES_VOCABS][i]
         if VOCAB_PATH in v and os.path.getmtime(v[VOCAB_PATH]) > v[VOCAB_DATE]:
             update_vocab(v)
@@ -286,7 +287,8 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
             elif ev == '+B1MOT+':
                 bw = bh = cfg['thumbnail-size']
                 r = win.TKroot
-                px, py = r.winfo_pointerx(), r.winfo_pointery()
+                winx, winy = win.TKroot.winfo_rootx(), win.TKroot.winfo_rooty()
+                px, py = r.winfo_pointerx() - winx, r.winfo_pointery() - winy
                 old_drag_bi, cur_drag_bi = cur_drag_bi, vidx
                 for bi, (bx, by) in enumerate(but_locs):
                     if bx < px < bx + bw and by < py < by + bh:
