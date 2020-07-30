@@ -3,15 +3,16 @@ import os
 import re
 import webbrowser
 from contextlib import suppress
-from threading import Lock, Thread
+from queue import Queue
+from threading import Thread
 
 from gtts import gTTS
 from playsound import playsound
 
 from .canvas import CANVAS_SZ, Canvas
 from .config import *
-from .vocab_pick import (SES_WIN_POS, VOCAB_CONFIG, VOCAB_NAME, VOCAB_WORDS, Set,
-                         SetProvider, calc_progress, get_vocabulary,
+from .vocab_pick import (SES_WIN_POS, VOCAB_CONFIG, VOCAB_NAME, VOCAB_WORDS,
+                         Set, SetProvider, calc_progress, get_vocabulary,
                          save_session, ses, sg, update_vocab)
 from .word_iterator import WordIterator
 
@@ -24,19 +25,21 @@ FORM_WIDTH = 28
 TTS_PATH = data_path('tts.mp3')
 
 
-def speak_tts(word: str):
-    if os.path.exists(TTS_PATH):
-        os.remove(TTS_PATH)
-    try:
+def tts_work_thread(q: Queue):
+    while word := q.get():
+        if os.path.exists(TTS_PATH):
+            os.remove(TTS_PATH)
         gTTS(word, lang=cfg['spoken-lang']).save(TTS_PATH)
         playsound(TTS_PATH)
-    except:
-        pass
 
 
 class Quiz:
     def __init__(self, v: dict, sets: SetProvider):
         self.__v = v
+        self.__tts_q = Queue()
+        self.__tts_thread = Thread(
+            target=tts_work_thread, args=(self.__tts_q,), daemon=True)
+        self.__tts_thread.start()
         self.__sets = sets
         self.__words = v[VOCAB_WORDS]
         self.__nwords = sum(map(len, self.__words))
@@ -74,7 +77,7 @@ class Quiz:
             # Speak new words
             if new and cfg['spoken-lang']:
                 if m := re.search(cfg['patt-word-spoken-part'], word[0]):
-                    Thread(target=speak_tts, args=(m[0],), daemon=True).start()
+                    self.__tts_q.put(m[0])
 
             # Reset controls
             win['-TRANSL-'].update(disabled=len(word) != 2)
@@ -137,6 +140,7 @@ class Quiz:
 
         # Submit progress to disk and quit
         win.close()
+        self.__tts_q.put(None)
         layout = None
         cc_layout = None
         win = None
