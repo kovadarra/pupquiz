@@ -1,3 +1,4 @@
+from bisect import insort, bisect
 import ctypes
 import gc
 import glob
@@ -111,7 +112,7 @@ def calc_progress(words):
     return sum(i*len(l) for i, l in enumerate(words[2:], start=1)) / nsteps
 
 
-def save_session_json():
+def save_session():
     with open(data_path('session'), 'wb') as f:
         pickle.dump(ses, f)
 
@@ -162,6 +163,7 @@ common_sets = get_sets(*cfg['common-sets'])
 if len(common_sets) < NVOCABS:
     raise RuntimeError('Not enough sets to represent all the vocabularies')
 
+
 # Has user made changes to config file?
 if ses[SES_CFG_DATE] < os.path.getmtime(CFG_PATH):
     ses[SES_WIN_POS] = (None, None)
@@ -195,13 +197,19 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                     margins=(40, 0), font=cfg['font'], return_keyboard_events=True)
 
     # Bind mouse enter, leave, and right-click events
+    but_locs = []
     for i in range(9):
+        w = win[i].Widget
+        but_locs.append((w.winfo_rootx(), w.winfo_rooty()))
         v = ses[SES_VOCABS][i]
         if VOCAB_PATH in v and os.path.getmtime(v[VOCAB_PATH]) > v[VOCAB_DATE]:
             update_vocab(v)
         win[i].bind('<Enter>', '+ENTER+')
         win[i].bind('<Leave>', '+LEAVE+')
+        win[i].bind('<Button-1>', '+LCLICK+')
         win[i].bind('<Button-3>', '+RCLICK+')
+        win[i].bind('<ButtonRelease-1>', '+LRELEASE+')
+        win[i].bind('<B1-Motion>', '+B1MOT+')
     dir_ = win['-DIR-']
     dir_.Widget.bind('<Enter>', lambda e: dir_(
         image_filename=cfg['image-folder-on']))
@@ -211,10 +219,13 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
         None, u'open', u'explorer.exe', u'/n,/select, ' + CFG_PATH, None, 1))
 
     # Window event loop
+    cur_drag_bi, did_drag, need_save = None, False, False
     while True:
         while True:
             event, values = win.read(timeout=500)
             if event is None:
+                if need_save:
+                    save_session()
                 win.close()
                 layout = None
                 win = None
@@ -230,33 +241,64 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
             if vidx != -1:
                 event = vidx
 
+        # Thumbnail select?
         if type(event) == int:
-            v = ses[SES_VOCABS][event]
-            if VOCAB_ICON_ON in v:
-                if all(not x for x in v[VOCAB_WORDS][:-1]):
-                    remove_vocab(event, win)
-                    continue
-                win.close()
-                layout = None
-                win = None
-                gc.collect()
-                return v, SetProvider(v)
+            if did_drag:
+                event = (event, '+LRELEASE+')
+            else:
+                v = ses[SES_VOCABS][event]
+                if VOCAB_ICON_ON in v:
+                    if all(not x for x in v[VOCAB_WORDS][:-1]):
+                        remove_vocab(event, win)
+                        continue
+                    win.close()
+                    layout = None
+                    win = None
+                    gc.collect()
+                    return v, SetProvider(v)
 
-            path = sg.PopupGetFile('', ses[SES_LAST_DIR] or '', file_types=cfg['vocab-file-types'],
-                                   no_window=True, initial_folder=ses[SES_LAST_DIR])
-            win.TKroot.focus_force()
-            if path:
-                ses[SES_LAST_DIR] = os.path.dirname(path)
-                v[VOCAB_PATH] = path
-                update_vocab(v)
-                win[event].update(image_data=get_icon(event, False))
-        elif type(event) == tuple:
+                path = sg.PopupGetFile('', ses[SES_LAST_DIR] or '', file_types=cfg['vocab-file-types'],
+                                       no_window=True, initial_folder=ses[SES_LAST_DIR])
+                win.TKroot.focus_force()
+                if path:
+                    ses[SES_LAST_DIR] = os.path.dirname(path)
+                    v[VOCAB_PATH] = path
+                    update_vocab(v)
+                    win[event].update(image_data=get_icon(event, False))
+
+        # Mouse event?
+        if type(event) == tuple:
             vidx, ev = event
-            if ev == '+RCLICK+':
+            if ev == '+LCLICK+':
+                cur_drag_bi = vidx
+            elif ev == '+LRELEASE+':
+                if cur_drag_bi != vidx:
+                    vs = ses[SES_VOCABS]
+                    vs[cur_drag_bi], vs[vidx] = vs[vidx], vs[cur_drag_bi]
+                    need_save = True
+                cur_drag_bi, did_drag = None, False
+            elif ev == '+RCLICK+':
                 remove_vocab(vidx, win)
             elif ev == '+ENTER+':
                 win[vidx](image_data=get_icon(vidx, True))
             elif ev == '+LEAVE+':
                 win[vidx](image_data=get_icon(vidx, False))
-            elif ev == '+HOTKEY+':
-                print(f'hotkey for {vidx}')
+            elif ev == '+B1MOT+':
+                bw = bh = cfg['thumbnail-size']
+                r = win.TKroot
+                px, py = r.winfo_pointerx(), r.winfo_pointery()
+                old_drag_bi, cur_drag_bi = cur_drag_bi, vidx
+                for bi, (bx, by) in enumerate(but_locs):
+                    if bx < px < bx + bw and by < py < by + bh:
+                        cur_drag_bi = bi
+                        break
+                if old_drag_bi != cur_drag_bi:
+                    did_drag = True
+                    if old_drag_bi != vidx:
+                        win[old_drag_bi](
+                            image_data=get_icon(old_drag_bi, False))
+                    if cur_drag_bi != vidx:
+                        win[cur_drag_bi](image_data=get_icon(vidx, True))
+                        win[vidx](image_data=get_icon(cur_drag_bi, False))
+                    else:
+                        win[vidx](image_data=get_icon(vidx, True))
