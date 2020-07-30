@@ -10,9 +10,9 @@ from playsound import playsound
 
 from .canvas import CANVAS_SZ, Canvas
 from .config import *
-from .session import (SES_WIN_POS, VOCAB_CONFIG, VOCAB_NAME, VOCAB_WORDS, Set,
-                      SetProvider, calc_progress, get_vocabulary,
-                      save_session, ses, sg, update_vocab)
+from .vocab_pick import (SES_WIN_POS, VOCAB_CONFIG, VOCAB_NAME, VOCAB_WORDS, Set,
+                         SetProvider, calc_progress, get_vocabulary,
+                         save_session, ses, sg, update_vocab)
 from .word_iterator import WordIterator
 
 

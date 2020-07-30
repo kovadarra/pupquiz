@@ -1,4 +1,3 @@
-from bisect import insort, bisect
 import ctypes
 import gc
 import glob
@@ -9,6 +8,7 @@ import re
 from itertools import chain, groupby, islice
 from operator import itemgetter
 from random import Random
+from sys import maxsize
 from typing import Dict, Iterator, List, Optional, Tuple
 
 import PySimpleGUI as sg
@@ -52,7 +52,7 @@ class SetProvider:
         self.__v = v
         self.__sets = {
             **get_sets(os.path.dirname(v[VOCAB_PATH])), **common_sets}
-        self.__keys = Random(hash(v[VOCAB_NAME]) % 10).sample(
+        self.__keys = Random(v[VOCAB_NAME]).sample(
             [*self.__sets], len(self.__sets))
 
         # Remove references to outdated sets (gallery info comes from disk)
@@ -124,6 +124,10 @@ def update_thumbnail(v: dict):
         set_[img], v[VOCAB_NAME], progress)
 
 
+def is_slot_used(s: dict):
+    return VOCAB_ICON_ON in s
+
+
 def update_vocab(v: dict):
     'Submits progress to disk and generates thumbnail reflecting done progress'
 
@@ -152,7 +156,7 @@ def update_vocab(v: dict):
 
 def remove_vocab(vidx: int, win: sg.Window):
     v = ses[SES_VOCABS][vidx]
-    if VOCAB_ICON_ON in v:
+    if is_slot_used(v):
         if sg.popup_ok_cancel(CFG_CONFIRM_DELETE.format(v[VOCAB_NAME]), title=CFG_APPNAME, keep_on_top=True) == 'OK':
             ses[SES_VOCABS][vidx] = new_vocab()
             win[vidx].update(image_data=get_icon(vidx, False))
@@ -171,7 +175,7 @@ if ses[SES_CFG_DATE] < os.path.getmtime(CFG_PATH):
     ses[SES_CFG_DATE] = os.path.getmtime(CFG_PATH)
     ses[SES_ADD_V_HOVER], ses[SES_ADD_V_DEF] = get_def_thumbnail()
     for v in map(ses[SES_VOCABS].__getitem__, range(9)):
-        if VOCAB_ICON_ON in v:
+        if is_slot_used(v):
             update_thumbnail(v)
 def_on, def_off = ses[SES_ADD_V_HOVER], ses[SES_ADD_V_DEF]
 
@@ -196,9 +200,10 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
     win = sg.Window(CFG_APPNAME, layout, finalize=True, location=win_loc,
                     margins=(40, 0), font=cfg['font'], return_keyboard_events=True)
 
-    # Bind mouse enter, leave, and right-click events
+    # Initialize mouse events
     but_locs = []
-    winx, winy = win.TKroot.winfo_rootx(), win.TKroot.winfo_rooty()
+    halfsz = cfg['thumbnail-size'] / 2
+    winx, winy = win.TKroot.winfo_rootx() - halfsz, win.TKroot.winfo_rooty() - halfsz
     for i in range(9):
         w = win[i].Widget
         but_locs.append((w.winfo_rootx() - winx, w.winfo_rooty() - winy))
@@ -248,7 +253,7 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                 event = (event, '+LRELEASE+')
             else:
                 v = ses[SES_VOCABS][event]
-                if VOCAB_ICON_ON in v:
+                if is_slot_used(v):
                     if all(not x for x in v[VOCAB_WORDS][:-1]):
                         remove_vocab(event, win)
                         continue
@@ -284,21 +289,21 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                 win[vidx](image_data=get_icon(vidx, True))
             elif ev == '+LEAVE+':
                 win[vidx](image_data=get_icon(vidx, False))
-            elif ev == '+B1MOT+':
-                bw = bh = cfg['thumbnail-size']
+            elif ev == '+B1MOT+' and is_slot_used(ses[SES_VOCABS][vidx]):
                 r = win.TKroot
-                winx, winy = win.TKroot.winfo_rootx(), win.TKroot.winfo_rooty()
-                px, py = r.winfo_pointerx() - winx, r.winfo_pointery() - winy
-                old_drag_bi, cur_drag_bi = cur_drag_bi, vidx
+                px, py = r.winfo_pointerx() - r.winfo_rootx(), r.winfo_pointery() - r.winfo_rooty()
+                minr = maxsize
                 for bi, (bx, by) in enumerate(but_locs):
-                    if bx < px < bx + bw and by < py < by + bh:
-                        cur_drag_bi = bi
-                        break
-                if old_drag_bi != cur_drag_bi:
+                    dx, dy = bx - px, by - py
+                    if (r := dx**2 + dy**2) < minr:
+                        minr = r
+                        new_drag_bi = bi
+                if new_drag_bi != cur_drag_bi:
                     did_drag = True
-                    if old_drag_bi != vidx:
-                        win[old_drag_bi](
-                            image_data=get_icon(old_drag_bi, False))
+                    if cur_drag_bi != vidx:
+                        win[cur_drag_bi](
+                            image_data=get_icon(cur_drag_bi, False))
+                    cur_drag_bi = new_drag_bi
                     if cur_drag_bi != vidx:
                         win[cur_drag_bi](image_data=get_icon(vidx, True))
                         win[vidx](image_data=get_icon(cur_drag_bi, False))

@@ -1,7 +1,7 @@
 from random import random, randrange
 
 from .config import cfg
-from .session import calc_progress
+from .vocab_pick import calc_progress
 
 
 class WordIterator:

@@ -7,7 +7,7 @@ from time import time_ns
 
 from .config import cfg
 from .graphics import Image, ImageDraw, ImageOps, blur, encode
-from .session import Set
+from .vocab_pick import Set
 
 CANVAS_SZ = (cfg['image-max-width'], cfg['image-max-height'])
 CC_CNV_GAP = 10
