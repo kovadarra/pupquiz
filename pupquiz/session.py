@@ -18,7 +18,7 @@ from .word_iterator import WordIterator
 
 
 def weighted_pick(ls, rd):
-    return ls[int(rd.random()**3.5*len(ls))]
+    return ls[int(rd.random()**3.5 * len(ls))]
 
 
 FORM_WIDTH = 28
@@ -43,12 +43,13 @@ class Quiz:
         self.__sets = sets
         self.__words = v[VOCAB_WORDS]
         self.__nwords = sum(map(len, self.__words))
-        self.__nsteps = self.__nwords * (len(self.__words)-2)
+        self.__nsteps = self.__nwords * (len(self.__words) - 2)
 
     def run(self):
         # Create command card layout
         def buts(*args):
-            return [sg.B(text, bind_return_key=key == '-OK-', key=key, pad=((0, 7), (10, 0))) for text, key in args]
+            return [sg.B(text, bind_return_key=key == '-OK-', key=key,
+                         pad=((0, 7), (10, 0))) for text, key in args]
         cc_layout = [[sg.T(CFG_GREET, pad=(0, 0), key='-RES-', size=(FORM_WIDTH, None))], [sg.T(key='-TXT-', pad=(0, (30, 10)), size=(FORM_WIDTH, None))]
                      ] + [[sg.In(key=0, focus=True, pad=(0, 0), size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
 
@@ -66,7 +67,7 @@ class Quiz:
         no_advance = False
         it = WordIterator(self.__words)
         for new, bucket, progress, word in it:
-            print(f'{progress}')
+            print(f'{progress=}')
             win['-OK-'].update(CFG_NEWWORD if new else CFG_GUESS)
 
             # Set image
@@ -90,6 +91,7 @@ class Quiz:
             win[0].set_focus()
 
             # Unhide window, if hidden
+            frame_time = min(1000, canvas.update())
             if hidden:
                 win.un_hide()
                 win.TKroot.focus_force()
@@ -97,14 +99,14 @@ class Quiz:
 
             # Retrieve input
             while True:
-                event, values = win.read(10)
+                event, values = win.read(timeout=frame_time)
                 if event != sg.TIMEOUT_KEY:
                     if event == '-RESET-':
                         if not self.__sets.reset_progress():
                             continue
                     break
                 ses[SES_WIN_POS] = list(win.CurrentLocation())
-                canvas.update()
+                frame_time = min(1000, canvas.update())
             if event in (None, '-MENU-'):
                 self.__words[bucket].append(word)
                 break
@@ -128,8 +130,9 @@ class Quiz:
                 else:
                     # Compare answer with solution
                     guess = list(values.values())
-                    if all(map(lambda x: x[0] in [y.strip() for y in x[1].split(',')], zip(guess, word[:-1]))):
-                        it.add_word(bucket+1, word)
+                    if all(map(lambda x: x[0] in [
+                           y.strip() for y in x[1].split(',')], zip(guess, word[:-1]))):
+                        it.add_word(bucket + 1, word)
                         win['-RES-'].update(CFG_CORRECT,
                                             text_color=cfg['color-info-correct'])
                         no_advance = False
@@ -146,7 +149,7 @@ class Quiz:
         win = None
         gc.collect()
         update_vocab(self.__v)
-        return type(event) == str and event == '-MENU-'
+        return isinstance(event, str) and event == '-MENU-'
 
 
 def main_loop():

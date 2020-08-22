@@ -21,7 +21,7 @@ def im_resize(im: Image.Image, w: int, h: int) -> Image.Image:
     wscale = min((1, w / imw))
     hscale = min((1, h / imh))
     scale = min((wscale, hscale))
-    sz = (int(imw*scale), int(imh*scale))
+    sz = (int(imw * scale), int(imh * scale))
     return im.resize(sz)
 
 
@@ -44,28 +44,29 @@ class Canvas:
         Because background images aren't actually supported, the image is split into tiles instead.
         '''
         cw, ch = CANVAS_SZ
-        ww, wh = cw+self.__ccwidth+CC_CNV_GAP, ch
+        ww, wh = cw + self.__ccwidth + CC_CNV_GAP, ch
         bg = blur(ImageOps.fit(im, (ww, wh), centering=(0, 0.5)), False)
 
         # Paste canvas (clear image)
         cnv = im_resize(im, cw, ch)
-        cx = int((cw-cnv.size[0])/2)
-        cy = int((ch-cnv.size[1])/2)
+        cx = int((cw - cnv.size[0]) / 2)
+        cy = int((ch - cnv.size[1]) / 2)
         bg.paste(cnv, (cx, cy))
 
         # Draw rounded edge of command card
         d: ImageDraw = ImageDraw.Draw(bg)
         ccx, ccy = ww - self.__ccwidth, self.__ccmargin
         rc = [ccx, ccy + CC_BORDER, ccx +
-              CC_BORDER, wh-self.__ccmargin-CC_BORDER-1]
+              CC_BORDER, wh - self.__ccmargin - CC_BORDER - 1]
         d.rectangle(rc, cfg['color-background'])
-        d.pieslice([ccx, rc[1] - CC_BORDER, ccx + CC_BORDER*2,
-                    rc[1]+CC_BORDER], 180, 270, cfg['color-background'])
-        d.pieslice([ccx, rc[3] - CC_BORDER, ccx + CC_BORDER*2,
-                    rc[3]+CC_BORDER], 90, 180, cfg['color-background'])
+        d.pieslice([ccx, rc[1] - CC_BORDER, ccx + CC_BORDER * 2,
+                    rc[1] + CC_BORDER], 180, 270, cfg['color-background'])
+        d.pieslice([ccx, rc[3] - CC_BORDER, ccx + CC_BORDER * 2,
+                    rc[3] + CC_BORDER], 90, 180, cfg['color-background'])
 
         # Return image data
-        return encode(bg.crop((0, 0, rc[2], wh))), encode(bg.crop((rc[2], 0, ww, self.__ccmargin))), encode(bg.crop((rc[2], wh-self.__ccmargin, ww, wh)))
+        return encode(bg.crop((0, 0, rc[2], wh))), encode(bg.crop(
+            (rc[2], 0, ww, self.__ccmargin))), encode(bg.crop((rc[2], wh - self.__ccmargin, ww, wh)))
 
     def __set_frame(self):
         '''
@@ -73,8 +74,8 @@ class Canvas:
         '''
         immain, imtopr, imbotr = self.__sgimgs
         data = self.__frames[self.__frame_idx][0]
-        szcnv = (CANVAS_SZ[0] + CC_CNV_GAP+CC_BORDER, CANVAS_SZ[1])
-        szmrg = (self.__ccwidth-CC_BORDER, self.__ccmargin)
+        szcnv = (CANVAS_SZ[0] + CC_CNV_GAP + CC_BORDER, CANVAS_SZ[1])
+        szmrg = (self.__ccwidth - CC_BORDER, self.__ccmargin)
         immain(data=data[0], size=szcnv)
         imtopr(data=data[1], size=szmrg)
         imbotr(data=data[2], size=szmrg)
@@ -122,10 +123,12 @@ class Canvas:
                 self.__frame_idx = 0
         time_ = time_ns()
         frame_time = time_ - self.__time
-        if self.__frames[self.__frame_idx][1] < frame_time:
+        if self.__frames[self.__frame_idx][1] <= frame_time:
             nframes = len(self.__frames)
             self.__frame_idx = (self.__frame_idx + 1) % nframes
             if nframes == 1:
                 self.__frames[self.__frame_idx][1] = maxsize
             self.__time = time_
             self.__set_frame()
+            return self.__frames[self.__frame_idx][1]
+        return self.__frames[self.__frame_idx][1] - frame_time
