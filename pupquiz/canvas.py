@@ -95,15 +95,15 @@ class Canvas:
             frames[-1][1] += PAUSE_GIF_DUR
         self.__imq.put((imid, frames))
 
-    def set_image(self, set_: Set, img_idx: int, no_advance):
+    def set_image(self, set_: Set, img_idx: int):
         '''
         Submit a new image for presentation. Will be prepared on another thread.
         '''
         if self.__set != set_:
-            self.__set, self.__img_idx = set_, 0 if no_advance else img_idx
+            self.__set, self.__img_idx = set_, img_idx
         elif self.__img_idx > img_idx:
             self.__img_idx = img_idx
-        elif self.__img_idx < img_idx and not no_advance:
+        elif self.__img_idx < img_idx:
             self.__img_idx = img_idx
         else:
             return  # Same

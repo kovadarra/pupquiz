@@ -67,15 +67,13 @@ class Quiz:
         hidden = True
         canvas = Canvas(win)
 
-        no_advance = False
         it = WordIterator(self.__words)
         for new, bucket, progress, word in it:
             win['-OK-'].update(CFG_NEWWORD if new else CFG_GUESS)
 
             # Set image
             set_, img = self.__sets.get_image(progress)
-            canvas.set_image(set_, img, no_advance)
-            no_advance = True
+            canvas.set_image(set_, img)
 
             # Speak new words
             if new and cfg['spoken-lang']:
@@ -137,7 +135,6 @@ class Quiz:
                         it.add_word(bucket + 1, word)
                         win['-RES-'].update(CFG_CORRECT,
                                             text_color=cfg['color-info-correct'])
-                        no_advance = False
                     else:
                         it.add_word(1, word)
                         win['-RES-'].update(CFG_INCORRECT.format(
