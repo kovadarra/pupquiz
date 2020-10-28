@@ -65,7 +65,8 @@ class SetProvider:
 
     def reset_progress(self) -> bool:
         'Clears gallery, moves words to the first bucket. Calls update_vocab.'
-        if sg.popup_ok_cancel(CFG_CONFIRM_RESET.format(self.__v[VOCAB_NAME]), title=CFG_APPNAME) != 'OK':
+        if sg.popup_ok_cancel(CFG_CONFIRM_RESET.format(
+                self.__v[VOCAB_NAME]), title=CFG_APPNAME) != 'OK':
             return False
         self.__keys.extend(self.__gallery)
         self.__gallery.clear()
@@ -76,10 +77,11 @@ class SetProvider:
 
     def get_image(self, step: float) -> Tuple[List[str], int]:
         'Returns set and image index associated with given index value between [0,1).'
-        s, i = divmod(len(self.__sets)*step, 1)
+        s, i = divmod(len(self.__sets) * step, 1)
         key = self.__keys[int(s)]
-        s = self.__sets[key]
-        return [f'{key}{v}' for v in s], int(i*len(s))
+        set_ = self.__sets[key]
+        print(f'{step:.04f}\t{s:.0f} - {int(i*len(set_))+1}/{len(set_)}')
+        return [f'{key}{v}' for v in set_], int(i * len(set_))
 
 
 def new_vocab() -> dict:
@@ -103,13 +105,14 @@ def get_icon(idx: int, on: bool = False):
 def get_sets(*paths) -> Dict[str, List[str]]:
     it = map(lambda m: (m['set'], m['img']), filter(None, map(setmatch, chain.from_iterable(
         glob.iglob(os.path.join(path, '**/**'), recursive=True) for path in paths))))
-    return {set_: sorted(list({i[1] for i in imgs})) for set_, imgs in groupby(it, itemgetter(0))}
+    return {set_: sorted(list({i[1] for i in imgs}))
+            for set_, imgs in groupby(it, itemgetter(0))}
 
 
 def calc_progress(words):
     nwords = sum(map(len, words))
-    nsteps = nwords * (len(words)-2)
-    return sum(i*len(l) for i, l in enumerate(words[2:], start=1)) / nsteps
+    nsteps = nwords * (len(words) - 2)
+    return sum(i * len(l) for i, l in enumerate(words[2:], start=1)) / nsteps
 
 
 def save_session():
@@ -157,7 +160,8 @@ def update_vocab(v: dict):
 def remove_vocab(vidx: int, win: sg.Window):
     v = ses[SES_VOCABS][vidx]
     if is_slot_used(v):
-        if sg.popup_ok_cancel(CFG_CONFIRM_DELETE.format(v[VOCAB_NAME]), title=CFG_APPNAME, keep_on_top=True) == 'OK':
+        if sg.popup_ok_cancel(CFG_CONFIRM_DELETE.format(
+                v[VOCAB_NAME]), title=CFG_APPNAME, keep_on_top=True) == 'OK':
             ses[SES_VOCABS][vidx] = new_vocab()
             win[vidx].update(image_data=get_icon(vidx, False))
 
@@ -187,12 +191,13 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
         v = ses[SES_VOCABS][event]
         return v, SetProvider(v)
 
-    # First row: info + guide, second-to-fourth rows: vocabulary slots (3 per row)
+    # First row: info + guide, second-to-fourth rows: vocabulary slots (3 per
+    # row)
     guidesz = (cfg['select-info-guide-width'], cfg['select-info-guide-height'])
     layout = [[sg.Image(key='-INFO-GUIDE-', background_color=cfg['color-select-info-guide'], size=guidesz, pad=((0, 10), (40, 10))),
                sg.T(CFG_SELECT_INFO, pad=(0, (40, 10)), auto_size_text=True, key='-INFO-')]] +\
         [[sg.B(key=j, pad=(10, 10), image_data=get_icon(j), button_color=(
-            None, cfg['color-background'])) for j in range(i*3, i*3+3)] for i in range(3)] +\
+            None, cfg['color-background'])) for j in range(i * 3, i * 3 + 3)] for i in range(3)] +\
         [[sg.B(image_filename=cfg['image-folder-off'], pad=(0, 0), key='-DIR-',
                button_color=(None, cfg['color-background']))]]
 
@@ -242,13 +247,13 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                 break
 
         # Vocabulary hotkey?
-        if type(event) == str:
+        if isinstance(event, str):
             vidx = cfg['select-hotkeys'].find(event)
             if vidx != -1:
                 event = vidx
 
         # Thumbnail select?
-        if type(event) == int:
+        if isinstance(event, int):
             if did_drag:
                 event = (event, '+LRELEASE+')
             else:
@@ -273,7 +278,7 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
                     win[event].update(image_data=get_icon(event, False))
 
         # Mouse event?
-        if type(event) == tuple:
+        if isinstance(event, tuple):
             vidx, ev = event
             if ev == '+LCLICK+':
                 cur_drag_bi = vidx

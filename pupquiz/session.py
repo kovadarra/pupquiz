@@ -70,7 +70,6 @@ class Quiz:
         no_advance = False
         it = WordIterator(self.__words)
         for new, bucket, progress, word in it:
-            print(f'{progress=}')
             win['-OK-'].update(CFG_NEWWORD if new else CFG_GUESS)
 
             # Set image

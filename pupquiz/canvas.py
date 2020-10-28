@@ -114,6 +114,8 @@ class Canvas:
     def update(self):
         '''
         Updates the presented image, if necessary. Call frequently from program main loop.
+
+        Returns, in milliseconds, the time to wait for next update() call.
         '''
         with suppress(Empty):
             imid, frames = self.__imq.get(not self.__frames)
@@ -130,5 +132,7 @@ class Canvas:
                 self.__frames[self.__frame_idx][1] = maxsize
             self.__time = time_
             self.__set_frame()
-            return self.__frames[self.__frame_idx][1]
-        return self.__frames[self.__frame_idx][1] - frame_time
+            frame_time = time_ns() - self.__time
+            # return self.__frames[self.__frame_idx][1] / 1_000_000
+        return max(
+            0, (self.__frames[self.__frame_idx][1] - frame_time) / 1_000_000)
