@@ -27,10 +27,13 @@ TTS_PATH = data_path('tts.mp3')
 
 def tts_work_thread(q: Queue):
     while word := q.get():
-        if os.path.exists(TTS_PATH):
-            os.remove(TTS_PATH)
-        gTTS(word, lang=cfg['spoken-lang']).save(TTS_PATH)
-        playsound(TTS_PATH)
+        try:
+            if os.path.exists(TTS_PATH):
+                os.remove(TTS_PATH)
+            gTTS(word, lang=cfg['spoken-lang']).save(TTS_PATH)
+            playsound(TTS_PATH)
+        except:
+            pass
 
 
 class Quiz:
