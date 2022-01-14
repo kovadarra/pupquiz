@@ -1,10 +1,9 @@
 import gc
 import os
 import re
+import threading
 import webbrowser
-from contextlib import suppress
-from queue import Queue
-from threading import Thread
+from tempfile import TemporaryDirectory
 
 from gtts import gTTS
 from playsound import playsound
@@ -12,49 +11,45 @@ from playsound import playsound
 from .canvas import CANVAS_SZ, Canvas
 from .config import *
 from .vocab_pick import (SES_WIN_POS, VOCAB_CONFIG, VOCAB_NAME, VOCAB_WORDS,
-                         Set, SetProvider, calc_progress, get_vocabulary,
-                         save_session, ses, sg, update_vocab)
+                         SetProvider, get_vocabulary, save_session, ses, sg, update_vocab)
 from .word_iterator import WordIterator
 
 
-def weighted_pick(ls, rd):
-    return ls[int(rd.random()**3.5 * len(ls))]
-
-
 FORM_WIDTH = 28
-TTS_PATH = data_path('tts.mp3')
 
-
-def tts_work_thread(q: Queue):
-    while word := q.get():
-        try:
-            if os.path.exists(TTS_PATH):
-                os.remove(TTS_PATH)
-            gTTS(word, lang=cfg['spoken-lang']).save(TTS_PATH)
-            playsound(TTS_PATH)
-        except:
-            pass
+class TTSJob(threading.Thread):
+    def __init__(self, word: str):
+        threading.Thread.__init__(self)
+        self.__w = word
+    def run(self):
+        with TemporaryDirectory() as d:
+            path = os.path.join(d, 'tts.mp3')
+            try:
+                gTTS(self.__w, lang=cfg['spoken-lang']).save(path)
+                playsound(path)
+            except BaseException:
+                pass
 
 
 class Quiz:
     def __init__(self, v: dict, sets: SetProvider):
         self.__v = v
-        self.__tts_q = Queue()
-        self.__tts_thread = Thread(
-            target=tts_work_thread, args=(self.__tts_q,), daemon=True)
-        self.__tts_thread.start()
         self.__sets = sets
         self.__words = v[VOCAB_WORDS]
-        self.__nwords = sum(map(len, self.__words))
-        self.__nsteps = self.__nwords * (len(self.__words) - 2)
 
     def run(self):
         # Create command card layout
         def buts(*args):
             return [sg.B(text, bind_return_key=key == '-OK-', key=key,
                          pad=((0, 7), (10, 0))) for text, key in args]
-        cc_layout = [[sg.T(CFG_GREET, pad=(0, 0), key='-RES-', size=(FORM_WIDTH, None))], [sg.T(key='-TXT-', pad=(0, (30, 10)), size=(FORM_WIDTH, None))]
-                     ] + [[sg.In(key=0, focus=True, pad=(0, 0), size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
+
+        if tow := cfg['type-out-words']:
+            cc_layout = [[sg.T(CFG_GREET, key='-RES-', size=(FORM_WIDTH, None))], [sg.T(key='-TXT-', pad=(0, (30, 10)), size=(FORM_WIDTH, None))]
+                         ] + [[sg.In(key=0, focus=True, size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
+        else:
+            # TODO: fix
+            cc_layout = [[sg.T(CFG_GREET, key='-RES-', size=(FORM_WIDTH, None))], [sg.T(key='-TXT-', pad=(0, (30, 10)), size=(FORM_WIDTH, None))]
+                         ] + [[sg.In(key=0, readonly=True, size=(FORM_WIDTH, 100))]] + [buts(('', '-OK-'), (CFG_TRANSLATE, '-TRANSL-'), (CFG_RESET, '-RESET-'), (CFG_MENU, '-MENU-'))]
 
         # Full layout including image tiles
         layout = [[sg.Image(size=CANVAS_SZ, key='-IM1-'), sg.Column([[sg.Image(size=(0, 0), key='-IM2-')], [sg.Col(cc_layout, key='-CCARD-', pad=(10, 10), size=(300, 200))], [
@@ -78,7 +73,7 @@ class Quiz:
             # Speak new words
             if new and cfg['spoken-lang']:
                 if m := re.search(cfg['patt-word-spoken-part'], word[0]):
-                    self.__tts_q.put(m[0])
+                    TTSJob(m[0]).start()
 
             # Reset controls
             win['-TRANSL-'].update(disabled=len(word) != 2)
@@ -142,7 +137,6 @@ class Quiz:
 
         # Submit progress to disk and quit
         win.close()
-        self.__tts_q.put(None)
         layout = None
         cc_layout = None
         win = None

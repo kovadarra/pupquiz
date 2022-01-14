@@ -31,13 +31,14 @@ cfg = {
     'gif-pause-duration': 1.2,
 
     # Session
+    'type-out-words': True,
     'spoken-lang': '',
     'new-words-index': 2,
     'translate-url': 'https://translate.google.com/#auto/en/{}',
     'critical-word-weight': 3.5,
 
     # Locale
-    'locale': ['Pup Quiz', 'Click on a vocabulary to quiz for it.\nAdd a vocabulary by selecting an empty slot.\nDelete a vocabulary with a right-click.', '{} - Pup Quiz', 'Welcome to Pup Quiz!', 'Correct!', '{}', 'Added to word stock', 'Got it!', 'Submit', 'Translate', 'Translation opened', 'Reset', 'Menu', 'Are you sure you want to delete "{}"?', 'Are you sure you want to reset progress on "{}"?'],
+    'locale': ['Pup Quiz', 'Click on a vocabulary to quiz for it.\nAdd a vocabulary by selecting an empty slot.\nDelete a vocabulary with a right-click.', '{} - Pup Quiz', 'Welcome to Pup Quiz!', 'Correct!', '{}', 'Added to word stock', 'Got it!', 'Submit', 'Translate', 'Translation opened', 'Reset', 'Menu', 'Are you sure you want to delete "{}"?', 'Are you sure you want to reset progress on "{}"?', 'Show', 'Ez', 'Nah'],
 
     # Styling
     'app-icon': resource_filename('pupquiz.resources', 'icon.ico'),
@@ -125,5 +126,5 @@ sg.theme_button_color(
 sg.theme_border_width(cfg['control-border-width'])
 
 # Set locale
-CFG_APPNAME, CFG_SELECT_INFO, CFG_APPNAME_SES, CFG_GREET, CFG_CORRECT, CFG_INCORRECT, CFG_ADDWORD, CFG_NEWWORD, CFG_GUESS, CFG_TRANSLATE, CFG_TRANSLATE_OPENED, CFG_RESET, CFG_MENU, CFG_CONFIRM_DELETE, CFG_CONFIRM_RESET = cfg[
+CFG_APPNAME, CFG_SELECT_INFO, CFG_APPNAME_SES, CFG_GREET, CFG_CORRECT, CFG_INCORRECT, CFG_ADDWORD, CFG_NEWWORD, CFG_GUESS, CFG_TRANSLATE, CFG_TRANSLATE_OPENED, CFG_RESET, CFG_MENU, CFG_CONFIRM_DELETE, CFG_CONFIRM_RESET, CFG_SHOW, CFG_EZ, CFG_NAH = cfg[
     'locale']

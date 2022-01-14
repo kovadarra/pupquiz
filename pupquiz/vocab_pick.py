@@ -131,9 +131,22 @@ def is_slot_used(s: dict):
     return VOCAB_ICON_ON in s
 
 
-def update_vocab(v: dict):
+def update_vocab(v: dict, win: sg.Window = None):
     'Submits progress to disk and generates thumbnail reflecting done progress'
-
+    if VOCAB_PATH not in v or not os.path.exists(v[VOCAB_PATH]):
+        path = sg.popup_get_file(
+            f'Give a path to {v[VOCAB_NAME]}.\nOld path was {v.get(VOCAB_PATH, "not set")}.',
+            initial_folder=os.path.dirname(
+                v[VOCAB_PATH]) if VOCAB_PATH in v else ses[SES_LAST_DIR],
+            file_types=cfg['vocab-file-types'])
+        if path:
+            v[VOCAB_PATH] = path
+        elif win and sg.popup_ok_cancel(f'Delete entry for {v[VOCAB_NAME]}?', 'Program will otherwise exit.') == 'OK':
+            vidx = ses[SES_VOCABS].index(v)
+            ses[SES_VOCABS][vidx] = new_vocab()
+            win[vidx].update(image_data=get_icon(vidx, False))
+        else:
+            exit(1)
     with open(v[VOCAB_PATH], 'r', encoding='U8') as f:
         m = contentsearch(f.read())
         contents, title = m['contents'], m['title']
@@ -184,6 +197,11 @@ if ses[SES_CFG_DATE] < os.path.getmtime(CFG_PATH):
 def_on, def_off = ses[SES_ADD_V_HOVER], ses[SES_ADD_V_DEF]
 
 
+def vocab_pold(v: dict):
+    return VOCAB_PATH in v and (not os.path.exists(
+        v[VOCAB_PATH]) or os.path.getmtime(v[VOCAB_PATH]) > v[VOCAB_DATE])
+
+
 def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
     'Presents vocabulary selection screen and returns chosen vocab + its sets'
 
@@ -213,8 +231,8 @@ def get_vocabulary(event: Optional[int] = None) -> Tuple[dict, SetProvider]:
         w = win[i].Widget
         but_locs.append((w.winfo_rootx() - winx, w.winfo_rooty() - winy))
         v = ses[SES_VOCABS][i]
-        if VOCAB_PATH in v and os.path.getmtime(v[VOCAB_PATH]) > v[VOCAB_DATE]:
-            update_vocab(v)
+        if vocab_pold(v):
+            update_vocab(v, win)
         win[i].bind('<Enter>', '+ENTER+')
         win[i].bind('<Leave>', '+LEAVE+')
         win[i].bind('<Button-1>', '+LCLICK+')

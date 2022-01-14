@@ -1,7 +1,7 @@
 from base64 import b64encode
 from io import BytesIO
 
-import matplotlib
+# import matplotlib
 from PIL import (Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont,
                  ImageOps)
 
